@@ -209,9 +209,13 @@ jobs:
     environment: release
     # One publish of this package at a time, whatever the tag, so that the
     # distribution tag chosen below is still right when the publish happens.
+    # Every release that is waiting keeps its place: by default only one may
+    # wait, and a newer one would cancel it. The order they then run in does
+    # not matter, since each chooses its tag as it publishes.
     concurrency:
       group: publish-npm-webhooks
       cancel-in-progress: false
+      queue: max
     permissions:
       contents: write # to create the GitHub release
       id-token: write # to prove to npm which workflow this is
