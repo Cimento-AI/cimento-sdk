@@ -22,6 +22,7 @@ permissions:
 
 env:
   PACKAGE: typescript/webhooks
+  NAME: "@cimento/webhooks"
 
 jobs:
   # Everything CI checks of the package, on the tagged commit, and then the
@@ -96,19 +97,29 @@ jobs:
         with:
           node-version-file: typescript/.node-version
 
+      - name: Require the package to be the one this workflow releases
+        run: |
+          declared="$(jq -r .name "$PACKAGE/package.json")"
+          if [ "$declared" != "$NAME" ]; then
+            echo "::error::package.json names $declared, and this workflow releases $NAME."
+            exit 1
+          fi
+
       # A pre-release goes out as `next`, and a fix to an older line under
       # that line's own tag, so that neither becomes what a plain install
       # gives. npm refuses to publish either without being told the tag.
-      - name: Choose the distribution tag
+      #
+      # This is a preview, for whoever approves. The publish job chooses again
+      # at the moment it publishes, since another release may come between.
+      - name: Preview the distribution tag
         id: dist-tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          name="$(jq -r .name "$PACKAGE/package.json")"
-          latest="$(npm view "$name" dist-tags.latest 2>/dev/null || true)"
+          latest="$(.github/scripts/npm-latest.sh "$NAME")"
           tag="$(.github/scripts/npm-dist-tag.sh "$VERSION" "$latest")"
           echo "dist-tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "$name@$VERSION is published under the tag \`$tag\`. The version now tagged latest: ${latest:-none}." | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "$NAME@$VERSION would be published under the tag \`$tag\`. The version now tagged latest: ${latest:-none}." | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Install dependencies
         working-directory: typescript
@@ -159,11 +170,13 @@ jobs:
           name: package
           path: package
 
-      - name: Checkout the Node version
+      - name: Checkout the Node version and the release scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: source
-          sparse-checkout: typescript/.node-version
+          sparse-checkout: |
+            typescript/.node-version
+            .github/scripts
           sparse-checkout-cone-mode: false
 
       - name: Set up Node
@@ -194,6 +207,11 @@ jobs:
     if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
     environment: release
+    # One publish of this package at a time, whatever the tag, so that the
+    # distribution tag chosen below is still right when the publish happens.
+    concurrency:
+      group: publish-npm-webhooks
+      cancel-in-progress: false
     permissions:
       contents: write # to create the GitHub release
       id-token: write # to prove to npm which workflow this is
@@ -204,11 +222,13 @@ jobs:
           name: package
           path: package
 
-      - name: Checkout the Node version
+      - name: Checkout the Node version and the release scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: source
-          sparse-checkout: typescript/.node-version
+          sparse-checkout: |
+            typescript/.node-version
+            .github/scripts
           sparse-checkout-cone-mode: false
 
       - name: Set up Node
@@ -228,10 +248,17 @@ jobs:
 
       # The path starts with ./ because npm reads "package/file" as a GitHub
       # repository to fetch.
+      # The tag is chosen here, from what is published now, and not taken from
+      # the preview: the approval may have waited while a newer version went
+      # out. If the registry cannot say what is published, nothing is.
       - name: Publish
         env:
-          DIST_TAG: ${{ needs.check.outputs.dist-tag }}
-        run: npm publish --access public --tag "$DIST_TAG" ./package/*.tgz
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          latest="$(source/.github/scripts/npm-latest.sh "$NAME")"
+          tag="$(source/.github/scripts/npm-dist-tag.sh "$VERSION" "$latest")"
+          echo "Publishing $NAME@$VERSION under the tag \`$tag\`. The version tagged latest before this: ${latest:-none}." | tee -a "$GITHUB_STEP_SUMMARY"
+          npm publish --access public --tag "$tag" ./package/*.tgz
 
       - name: Create the GitHub release
         env:
