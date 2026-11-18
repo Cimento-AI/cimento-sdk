@@ -37,6 +37,19 @@ make test
 
 The event types in both SDKs (`events_gen.go`, `events.gen.ts`) are generated from that schema by `make generate`. Do not edit them either; CI fails when they are not what the generator writes.
 
+## Checking the SDKs against recorded webhooks
+
+Two targets run files of webhooks through both SDKs and fail if either refuses one, fails to read one as its type, or the two make different things of it:
+
+```sh
+make check-events EVENTS=<dir>            # every file is an event body
+make check-deliveries DELIVERIES=<dir>    # recorded requests
+```
+
+A recorded request is two files with one name: `<name>.body`, the request's body byte for byte, and `<name>.json`, an object with `headers` (each name to a list of values) and `receivedAt` (when it arrived). Each is verified as a receiver would have verified it at that time, with the secrets in `CIMENTO_WEBHOOK_SECRETS`, separated by commas.
+
+CI runs `check-events` over the valid fixtures, so the two SDKs are tested against each other as well as against the fixtures.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md).

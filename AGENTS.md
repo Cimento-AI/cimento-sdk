@@ -27,6 +27,7 @@ A change to how one SDK verifies or parses is a change to both. They are tested 
 - A change in behaviour starts with a fixture. Then both SDKs are made to pass it.
 - An event fixture is a request body byte for byte. Do not reformat one.
 - `internal/fixtures` checks the fixtures against the schema and against themselves. It shares no code with the SDKs; keep it that way.
+- `internal/check` runs files through both SDKs and compares what each makes of them (`make check-events`, `make check-deliveries`). CI runs it over the valid fixtures.
 
 ## `internal/`
 
