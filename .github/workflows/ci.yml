@@ -95,6 +95,16 @@ jobs:
       - name: Test
         run: go test -race -shuffle=on -count=1 ./...
 
+      # The generated event types are committed. This fails when they are not
+      # what the generator writes from the committed schema and fixtures.
+      - name: Verify generated files are current
+        run: |
+          go run ./gen -root ..
+          git diff --exit-code -- .. || {
+            echo "::error::Generated files are stale. Run 'make generate' and commit the result."
+            exit 1
+          }
+
   typescript:
     name: TypeScript (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
