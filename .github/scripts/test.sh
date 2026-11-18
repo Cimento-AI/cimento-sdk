@@ -46,6 +46,11 @@ expect release-1.2 ./npm-dist-tag.sh 1.2.9 2.0.0
 expect refused ./npm-dist-tag.sh v0.1.0
 expect refused ./npm-dist-tag.sh ""
 
+# The registry not answering is a failure, and not "nothing is published".
+# Nothing listens on the port, so this needs no network.
+expect refused env NPM_REGISTRY=http://127.0.0.1:9 ./npm-latest.sh @cimento/webhooks
+expect refused ./npm-latest.sh ""
+
 if [ "$failed" = 0 ]; then
   echo "release scripts: ok"
 fi
