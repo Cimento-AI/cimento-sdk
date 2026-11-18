@@ -1,0 +1,13 @@
+{
+  "id": "13c2d1e0-f504-4617-b8c9-9e0f1a2b3c4d",
+  "type": "training.exemption.created",
+  "occurredAt": "2026-11-12T09:00:00.000Z",
+  "data": {
+    "user": {
+      "id": "7a6b5c4d-3e2f-4a1b-8c9d-0e1f2a3b4c5d",
+      "email": "ada.lovelace@example.com"
+    },
+    "endsAt": "2027-01-01T0:00:00Z",
+    "actorId": null
+  }
+}

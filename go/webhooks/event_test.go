@@ -115,6 +115,8 @@ func TestParseAcceptsWhatItDoesNotKnow(t *testing.T) {
 		"known-type-missing-field": EventTypeTrainingCampaignLaunched,
 		"known-type-null-field":    EventTypeTrainingAssignmentCompleted,
 		"known-type-null-item":     EventTypeAgentHubSettingsUpdated,
+		"known-type-comma-time":    EventTypeTrainingAssignmentCompleted,
+		"known-type-short-hour":    EventTypeTrainingExemptionCreated,
 	} {
 		if unfit := parse(name); unfit.Type != eventType || unfit.Data != nil || len(unfit.RawData) == 0 {
 			t.Errorf("%s: %+v", name, unfit)

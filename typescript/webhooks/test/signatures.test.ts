@@ -117,6 +117,23 @@ test("the defaults are five minutes and the machine's clock", async () => {
   expect(await at(sent + 1, -3600)).toBe("timestamp_too_old");
 });
 
+test("a tolerance or a clock that is not a number cannot turn the check off", async () => {
+  for (const toleranceSeconds of [NaN, Infinity, -Infinity, "300"]) {
+    expect(
+      () =>
+        new Webhook(delivery.secrets[0]!, {
+          toleranceSeconds: toleranceSeconds as number,
+        }),
+    ).toThrowError(RangeError);
+  }
+  const stopped = new Webhook(delivery.secrets[0]!, {
+    now: () => new Date(NaN),
+  });
+  await expect(
+    stopped.verifySignature(delivery.body, delivery.headers),
+  ).rejects.toThrow(RangeError);
+});
+
 test("a secret that is not a string is malformed", () => {
   for (const secret of [undefined, null, 42, {}]) {
     expect(() => new Webhook(secret as unknown as string)).toThrowError(

@@ -1,0 +1,15 @@
+{
+  "id": "02b1c0df-e4f3-4506-a7b8-8d9e0f1a2b3c",
+  "type": "training.assignment.completed",
+  "occurredAt": "2026-11-12T15:02:11.902Z",
+  "data": {
+    "assignmentId": "8f3b2a1c-6d5e-4f70-9a8b-7c6d5e4f3a2b",
+    "campaignId": "2e1d0c9b-8a7f-4e6d-b5c4-a3b2c1d0e9f8",
+    "user": {
+      "id": "7a6b5c4d-3e2f-4a1b-8c9d-0e1f2a3b4c5d",
+      "email": "ada.lovelace@example.com"
+    },
+    "completedAt": "2026-11-12T15:02:11,871Z",
+    "completedBy": "learner"
+  }
+}

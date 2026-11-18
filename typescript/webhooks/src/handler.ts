@@ -29,8 +29,9 @@ async function read(request: Request): Promise<Uint8Array> {
   const chunks: Uint8Array[] = [];
   let length = 0;
   if (request.body !== null) {
-    const reader = request.body.getReader();
     try {
+      // getReader throws for a body something has already read.
+      const reader = request.body.getReader();
       for (;;) {
         const { done, value } = await reader.read();
         if (done) {

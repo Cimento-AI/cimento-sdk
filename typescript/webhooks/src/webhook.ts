@@ -19,7 +19,8 @@ export interface WebhookOptions {
   additionalSecrets?: readonly string[];
   /**
    * How far a webhook's timestamp may be from the clock, in either direction.
-   * `DEFAULT_TOLERANCE_SECONDS` when absent. Counted in whole seconds.
+   * `DEFAULT_TOLERANCE_SECONDS` when absent. Counted in whole seconds. It
+   * must be a finite number: there is no way to turn the check off.
    */
   toleranceSeconds?: number;
   /** The clock timestamps are checked against. For tests. */
@@ -59,7 +60,8 @@ export class Webhook {
   /**
    * `secret` is the `whsec_...` value Cimento shows once when the endpoint
    * is created or its secret is rotated. Throws a `WebhookVerificationError`
-   * with the code `malformed_secret` for a secret that is not one.
+   * with the code `malformed_secret` for a secret that is not one, and a
+   * `RangeError` for a tolerance that is not a finite number.
    */
   constructor(secret: string, options: WebhookOptions = {}) {
     const secrets = [secret, ...(options.additionalSecrets ?? [])];
@@ -76,10 +78,13 @@ export class Webhook {
       }
       return key;
     });
-    this.#tolerance = Math.max(
-      0,
-      Math.trunc(options.toleranceSeconds ?? DEFAULT_TOLERANCE_SECONDS),
-    );
+    const tolerance = options.toleranceSeconds ?? DEFAULT_TOLERANCE_SECONDS;
+    // NaN or Infinity would make both timestamp checks pass for any
+    // timestamp, and a captured request could then be replayed for ever.
+    if (typeof tolerance !== "number" || !Number.isFinite(tolerance)) {
+      throw new RangeError("toleranceSeconds must be a finite number");
+    }
+    this.#tolerance = Math.max(0, Math.trunc(tolerance));
     this.#now = options.now ?? (() => new Date());
   }
 
@@ -140,6 +145,9 @@ export class Webhook {
       );
     }
     const now = Math.floor(this.#now().getTime() / 1000);
+    if (!Number.isFinite(now)) {
+      throw new RangeError("the clock given as `now` returned an invalid date");
+    }
     if (now - sentAt > this.#tolerance) {
       throw new WebhookVerificationError(
         "timestamp_too_old",

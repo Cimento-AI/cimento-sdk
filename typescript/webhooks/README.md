@@ -149,4 +149,4 @@ export async function deliver(
 }
 ```
 
-`sign` uses the first secret. `parseEvent` reads a body as an event without verifying it. The `now` and `toleranceSeconds` options set the clock and the tolerance a `Webhook` uses.
+`sign` uses the first secret. `parseEvent` reads a body as an event without verifying it. The `now` and `toleranceSeconds` options set the clock and the tolerance a `Webhook` uses. The tolerance must be a finite number; the timestamp check cannot be turned off.
