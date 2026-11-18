@@ -2,13 +2,19 @@
 
 SDKs for [Cimento](https://cimento.ai).
 
-> [!NOTE]
-> Nothing here is released yet. Both SDKs work; the Go module is not tagged and the TypeScript package is not published.
+| Package                                                                                                             | Language   | Source                                       | What it is for                                                                             |
+| ------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [`github.com/cimento-ai/cimento-sdk/go/webhooks`](https://pkg.go.dev/github.com/cimento-ai/cimento-sdk/go/webhooks) | Go         | [`go/webhooks`](go/webhooks)                 | Verify [webhooks](https://docs.cimento.ai/webhooks/overview) and read them as typed events |
+| [`@cimento/webhooks`](https://www.npmjs.com/package/@cimento/webhooks)                                              | TypeScript | [`typescript/webhooks`](typescript/webhooks) | The same, for Node and other JavaScript runtimes                                           |
 
-| Package                                         | Language   | Path                                         | What it is for                                                                             |
-| ----------------------------------------------- | ---------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `github.com/cimento-ai/cimento-sdk/go/webhooks` | Go         | [`go/webhooks`](go/webhooks)                 | Verify [webhooks](https://docs.cimento.ai/webhooks/overview) and read them as typed events |
-| `@cimento/webhooks`                             | TypeScript | [`typescript/webhooks`](typescript/webhooks) | The same, for Node and other JavaScript runtimes                                           |
+```sh
+go get github.com/cimento-ai/cimento-sdk/go/webhooks
+npm install @cimento/webhooks
+```
+
+Each package's README shows how to use it. Cimento's guide to webhooks is at [docs.cimento.ai](https://docs.cimento.ai/webhooks/overview).
+
+Each SDK has its own version. Until 1.0, a minor version (0.2.0) may change the API and a patch version (0.1.1) will not. Versions are listed under [Releases](https://github.com/Cimento-AI/cimento-sdk/releases).
 
 ## Layout
 

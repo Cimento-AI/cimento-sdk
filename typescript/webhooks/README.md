@@ -2,14 +2,13 @@
 
 Verify [webhooks sent by Cimento](https://docs.cimento.ai/webhooks/overview) and read them as typed events.
 
-> [!NOTE]
-> This package is not released yet. Its API may still change.
-
 ```sh
 npm install @cimento/webhooks
 ```
 
-It needs Node 22 or newer, or any runtime with Web Crypto: Cloudflare Workers, Deno, Bun. It has no dependencies.
+It needs Node 22 or newer, or any runtime with Web Crypto: Cloudflare Workers, Deno, Bun. It has no dependencies. Cimento's guide to webhooks starts at [Verifying signatures](https://docs.cimento.ai/webhooks/verifying-signatures).
+
+Until 1.0, a minor version (0.2.0) may change the API and a patch version (0.1.1) will not.
 
 ## Receive webhooks
 

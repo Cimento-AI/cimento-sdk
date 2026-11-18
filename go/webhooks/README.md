@@ -2,14 +2,13 @@
 
 Verify [webhooks sent by Cimento](https://docs.cimento.ai/webhooks/overview) and read them as typed events.
 
-> [!NOTE]
-> This module is not released yet. Its API may still change.
-
 ```sh
 go get github.com/cimento-ai/cimento-sdk/go/webhooks
 ```
 
-It needs Go 1.26 or newer and has no dependencies.
+It needs Go 1.26 or newer and has no dependencies. The reference is on [pkg.go.dev](https://pkg.go.dev/github.com/cimento-ai/cimento-sdk/go/webhooks), and Cimento's guide to webhooks starts at [Verifying signatures](https://docs.cimento.ai/webhooks/verifying-signatures).
+
+Until 1.0, a minor version (0.2.0) may change the API and a patch version (0.1.1) will not.
 
 ## Receive webhooks
 
