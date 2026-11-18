@@ -32,6 +32,7 @@ jobs:
     outputs:
       release: ${{ steps.mode.outputs.release }}
       version: ${{ steps.version.outputs.version }}
+      dist-tag: ${{ steps.dist-tag.outputs.dist-tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -94,6 +95,20 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: typescript/.node-version
+
+      # A pre-release goes out as `next`, and a fix to an older line under
+      # that line's own tag, so that neither becomes what a plain install
+      # gives. npm refuses to publish either without being told the tag.
+      - name: Choose the distribution tag
+        id: dist-tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          name="$(jq -r .name "$PACKAGE/package.json")"
+          latest="$(npm view "$name" dist-tags.latest 2>/dev/null || true)"
+          tag="$(.github/scripts/npm-dist-tag.sh "$VERSION" "$latest")"
+          echo "dist-tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "$name@$VERSION is published under the tag \`$tag\`. The version now tagged latest: ${latest:-none}." | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Install dependencies
         working-directory: typescript
@@ -166,7 +181,9 @@ jobs:
           fi
 
       - name: Publish, as a dry run
-        run: npm publish --dry-run --access public ./package/*.tgz
+        env:
+          DIST_TAG: ${{ needs.check.outputs.dist-tag }}
+        run: npm publish --dry-run --access public --tag "$DIST_TAG" ./package/*.tgz
 
   # The release. It waits for an approval: the `release` environment has
   # required reviewers. npm trusts this workflow in that environment, so there
@@ -212,7 +229,9 @@ jobs:
       # The path starts with ./ because npm reads "package/file" as a GitHub
       # repository to fetch.
       - name: Publish
-        run: npm publish --access public ./package/*.tgz
+        env:
+          DIST_TAG: ${{ needs.check.outputs.dist-tag }}
+        run: npm publish --access public --tag "$DIST_TAG" ./package/*.tgz
 
       - name: Create the GitHub release
         env:

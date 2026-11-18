@@ -7,6 +7,7 @@ test:
 	cd go/webhooks && go vet ./... && go test -race -shuffle=on -count=1 ./...
 	cd internal && go vet ./... && go test -race -shuffle=on -count=1 ./...
 	cd typescript && pnpm -r test
+	.github/scripts/test.sh
 	$(MAKE) check-fixtures
 
 lint:

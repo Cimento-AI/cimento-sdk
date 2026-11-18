@@ -27,6 +27,16 @@ A release is refused when the tagged commit is not on `main`.
 
 The run fails before the approval if the tag does not name the version in `package.json`.
 
+The workflow chooses the npm distribution tag from the version, and says which in the run's summary:
+
+| Version                                            | Tag           |
+| -------------------------------------------------- | ------------- |
+| Newer than everything published                    | `latest`      |
+| A pre-release, such as `0.2.0-rc.1`                | `next`        |
+| Older than `latest`, such as `0.1.1` after `0.2.0` | `release-0.1` |
+
+So `npm install @cimento/webhooks` only ever gives the newest full release.
+
 The workflow has no npm token. npm trusts it by [trusted publishing](https://docs.npmjs.com/trusted-publishers): the run proves to npm which repository, workflow and environment it is.
 
 ## Releasing the Go module
