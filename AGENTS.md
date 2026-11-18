@@ -67,3 +67,11 @@ Refs: CIM-1234
 ## Checks
 
 `make lint` and `make test` from the root run what CI runs.
+
+## Releases
+
+See [RELEASING.md](RELEASING.md). A tag releases an SDK, and a person approves the run.
+
+- Do not push a `go/webhooks/v*` or `typescript/webhooks/v*` tag unless asked to. A Go version cannot be taken back once it is public.
+- The release workflows pin every action to a commit. Keep them pinned, and keep the job that publishes free of anything it does not need.
+- `release-npm.yml` and the `release` environment are named in npm's trusted publisher settings. Renaming either breaks publishing until npm is changed to match.
