@@ -1,0 +1,10 @@
+{
+  "id": "1c2d3d8e-69ab-4ebe-9fc8-d39e4f5061d7",
+  "type": "agent_hub.finding.decided",
+  "occurredAt": "2026-11-12T10:40:03.115Z",
+  "data": {
+    "findingId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
+    "decision": "rotated",
+    "actorId": "3c2b1a0f-9e8d-4766-8554-433c2b1a0f0e"
+  }
+}

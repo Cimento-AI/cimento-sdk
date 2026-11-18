@@ -1,0 +1,17 @@
+{
+  "id": "0b1c2c7d-589a-4dad-8eb7-c28d3e4f50c6",
+  "type": "agent_hub.finding.created",
+  "occurredAt": "2026-11-12T10:14:52.660Z",
+  "data": {
+    "findingId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
+    "kind": "action",
+    "ruleId": "secrets_and_credentials",
+    "ruleName": "Secrets and credentials",
+    "title": "An API key was passed to a shell command",
+    "response": "block",
+    "user": {
+      "id": "0f9e8d7c-6b5a-4433-9221-100f0e0d0c0b",
+      "email": "ada.lovelace@example.com"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "8d9ea4f5-d012-4f25-8a3f-4a05b6c73844",
+  "type": "agent_hub.simulation.requested",
+  "occurredAt": "2026-11-12T15:00:11.052Z",
+  "data": {
+    "requestId": "c2d3e4f5-a6b7-4c8d-8e9f-1a2b3c4d5e6f",
+    "actorId": null
+  }
+}

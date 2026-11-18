@@ -1,0 +1,15 @@
+{
+  "id": "9eafb506-e123-4a36-9b40-5b16c7d84955",
+  "type": "agent_hub.simulation.completed",
+  "occurredAt": "2026-11-12T15:38:46.700Z",
+  "data": {
+    "passId": "d3e4f5a6-b7c8-4d9e-9f0a-2b3c4d5e6f7a",
+    "counts": {
+      "agents": 24,
+      "saved": 46,
+      "landed": 3,
+      "notCopyable": 1,
+      "failed": 2
+    }
+  }
+}

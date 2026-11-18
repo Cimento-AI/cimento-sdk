@@ -1,0 +1,13 @@
+{
+  "id": "d8e9f94a-2567-4a7a-9b84-9f5a0b1c2d93",
+  "type": "training.exemption.created",
+  "occurredAt": "2026-11-10T12:05:40.731Z",
+  "data": {
+    "user": {
+      "id": "2b1a0f9e-8d7c-4655-9443-322b1a0f0e0d",
+      "email": "alan.turing@example.com"
+    },
+    "endsAt": "2027-01-31T00:00:00Z",
+    "actorId": "3c2b1a0f-9e8d-4766-8554-433c2b1a0f0e"
+  }
+}

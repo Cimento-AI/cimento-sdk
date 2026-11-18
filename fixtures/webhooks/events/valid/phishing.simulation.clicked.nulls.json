@@ -1,0 +1,13 @@
+{
+  "id": "2d8b4e3f-1a5c-4b69-8c73-8e4f5a6b7c82",
+  "type": "phishing.simulation.clicked",
+  "occurredAt": "2026-11-10T14:21:48.930Z",
+  "data": {
+    "sendId": "7c4e1a9b-2d3f-4b6a-9e8d-5f0a1b2c3d4e",
+    "roundId": null,
+    "user": {
+      "id": "0f9e8d7c-6b5a-4433-9221-100f0e0d0c0b",
+      "email": null
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "d283f3e4-cf01-4a14-9b2e-39f4a5b6c73d",
+  "type": "training.campaign.launched",
+  "occurredAt": "2026-11-09T09:00:12.640Z",
+  "data": {
+    "campaignId": "8a1f2e3d-4c5b-4a69-8877-665544332211",
+    "name": "Q4 security refresher",
+    "courseId": null,
+    "actorId": null
+  }
+}

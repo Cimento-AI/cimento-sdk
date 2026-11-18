@@ -1,0 +1,13 @@
+{
+  "id": "b061d1c2-adef-4ef2-9f0c-17d2e3f4a51b",
+  "type": "phishing.exclusion.added",
+  "occurredAt": "2026-11-11T10:05:31.884Z",
+  "data": {
+    "user": {
+      "id": "4d3c2b1a-0f9e-4877-9665-544d3c2b1a0f",
+      "email": null
+    },
+    "actorId": null,
+    "reason": null
+  }
+}

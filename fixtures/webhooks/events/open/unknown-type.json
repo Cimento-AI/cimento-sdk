@@ -1,0 +1,9 @@
+{
+  "id": "5d0c1b2a-3f4e-4a5b-9c6d-7e8f9a0b1c2d",
+  "type": "billing.invoice.paid",
+  "occurredAt": "2027-03-02T09:15:44.508Z",
+  "data": {
+    "invoiceId": "0f1e2d3c-4b5a-4968-8776-5a4b3c2d1e0f",
+    "amount": 4200
+  }
+}

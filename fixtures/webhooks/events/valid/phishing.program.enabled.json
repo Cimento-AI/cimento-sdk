@@ -1,0 +1,8 @@
+{
+  "id": "6b1c8c7d-5e9a-4fad-8ab7-c28d9eafb0c6",
+  "type": "phishing.program.enabled",
+  "occurredAt": "2026-11-03T09:15:00.402Z",
+  "data": {
+    "actorId": "3c2b1a0f-9e8d-4766-8554-433c2b1a0f0e"
+  }
+}

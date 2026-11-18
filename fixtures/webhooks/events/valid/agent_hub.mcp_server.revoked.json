@@ -1,0 +1,9 @@
+{
+  "id": "7c8d93e4-cf01-4e14-9f2e-39f4a5b62733",
+  "type": "agent_hub.mcp_server.revoked",
+  "occurredAt": "2026-11-12T09:47:38.276Z",
+  "data": {
+    "mcpServerId": "b1c2d3e4-f5a6-4b7c-9d8e-0f1a2b3c4d5e",
+    "actorId": "3c2b1a0f-9e8d-4766-8554-433c2b1a0f0e"
+  }
+}

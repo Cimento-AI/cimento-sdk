@@ -1,0 +1,10 @@
+{
+  "id": "9b4a5f6e-7d8c-4e9f-b0a1-1c2d3e4f5a6b",
+  "type": "phishing.round.started",
+  "occurredAt": "2026-11-16T08:00:00Z",
+  "data": {
+    "roundId": "4d3c2b1a-0f9e-4d8c-b7a6-5f4e3d2c1b0a",
+    "period": "2026-W47",
+    "plannedSends": 240
+  }
+}
