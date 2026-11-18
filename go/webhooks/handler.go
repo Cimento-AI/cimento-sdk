@@ -12,7 +12,7 @@ import (
 const maxBodyBytes = 1 << 20
 
 type handler struct {
-	verifier *Verifier
+	webhook  *Webhook
 	handle   func(ctx context.Context, event *Event) error
 	rejected func(r *http.Request, err error)
 }
@@ -28,7 +28,7 @@ func OnReject(rejected func(r *http.Request, err error)) HandlerOption {
 }
 
 // Handler returns an http.Handler that verifies each request, reads it as an
-// event and calls handle with it. It panics if verifier or handle is nil.
+// event and calls handle with it. It panics if wh or handle is nil.
 //
 // It answers 204 when handle returns nil and 500 when it returns an error,
 // which has Cimento send the event again later. Cimento waits 10 seconds for
@@ -39,11 +39,11 @@ func OnReject(rejected func(r *http.Request, err error)) HandlerOption {
 // answered 401 for a signature that does not match or a timestamp outside the
 // tolerance, 400 for a missing header or a body that is not an event, 405 for
 // a method other than POST, and 413 for a body over 1 MiB.
-func Handler(verifier *Verifier, handle func(ctx context.Context, event *Event) error, options ...HandlerOption) http.Handler {
-	if verifier == nil || handle == nil {
-		panic("webhooks: Handler needs a Verifier and a function to handle events")
+func Handler(wh *Webhook, handle func(ctx context.Context, event *Event) error, options ...HandlerOption) http.Handler {
+	if wh == nil || handle == nil {
+		panic("webhooks: Handler needs a Webhook and a function to handle events")
 	}
-	h := &handler{verifier: verifier, handle: handle, rejected: func(*http.Request, error) {}}
+	h := &handler{webhook: wh, handle: handle, rejected: func(*http.Request, error) {}}
 	for _, option := range options {
 		option(h)
 	}
@@ -69,7 +69,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := h.verifier.Verify(body, r.Header)
+	event, err := h.webhook.Verify(body, r.Header)
 	switch {
 	case err == nil:
 	case errors.Is(err, ErrInvalidSignature), errors.Is(err, ErrTimestampTooOld), errors.Is(err, ErrTimestampTooNew):

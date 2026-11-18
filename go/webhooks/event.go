@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -23,14 +24,15 @@ type Event struct {
 	// tell them apart by Type.
 	//
 	// It is nil for a type this version of the package does not know, and
-	// for data that does not fit the type's struct. RawData has it then.
+	// for data that does not fit the type: a field is missing, is null where
+	// it may not be, or is of another kind. RawData has it then.
 	Data any
 	// RawData is the event's data as JSON, exactly as it was sent.
 	RawData json.RawMessage
 }
 
 // Parse reads body as an event without checking who sent it. It is for tests
-// and for bodies already verified; a receiver should call Verifier.Verify.
+// and for bodies already verified; a receiver should call Webhook.Verify.
 //
 // An event of a type this version of the package does not know is not an
 // error, and nor is a field it does not know.
@@ -60,8 +62,51 @@ func Parse(body []byte) (*Event, error) {
 	}
 
 	event := &Event{ID: *envelope.ID, Type: *envelope.Type, OccurredAt: occurredAt, RawData: envelope.Data}
-	if payload, known := newPayload(event.Type); known && json.Unmarshal(envelope.Data, payload) == nil {
+	payload, known := newPayload(event.Type)
+	if known && fits(envelope.Data, reflect.TypeOf(payload).Elem()) && json.Unmarshal(envelope.Data, payload) == nil {
 		event.Data = payload
 	}
 	return event, nil
+}
+
+var timeType = reflect.TypeFor[time.Time]()
+
+// fits reports whether data has every field of a payload struct, with null
+// only where the field is a pointer. Decoding alone would not say: it leaves
+// a field that is missing or null at its zero value, which a receiver could
+// not tell from a value Cimento sent.
+func fits(data json.RawMessage, payload reflect.Type) bool {
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(data, &fields) != nil || fields == nil {
+		return false
+	}
+	for i := range payload.NumField() {
+		field := payload.Field(i)
+		value, present := fields[field.Tag.Get("json")]
+		if !present {
+			return false
+		}
+		isNull := string(bytes.TrimSpace(value)) == "null"
+		switch {
+		case isNull:
+			if field.Type.Kind() != reflect.Pointer {
+				return false
+			}
+		case field.Type.Kind() == reflect.Struct && field.Type != timeType:
+			if !fits(value, field.Type) {
+				return false
+			}
+		case field.Type.Kind() == reflect.Slice:
+			var items []json.RawMessage
+			if json.Unmarshal(value, &items) != nil {
+				return false
+			}
+			for _, item := range items {
+				if string(bytes.TrimSpace(item)) == "null" {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }

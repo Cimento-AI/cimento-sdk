@@ -57,7 +57,7 @@ func FuzzVerify(f *testing.F) {
 	secret := cases[1].Secrets[0]
 
 	f.Fuzz(func(t *testing.T, id string, timestamp string, signature string, body []byte, now int64) {
-		verifier, err := NewVerifier(secret, WithClock(func() time.Time { return time.Unix(now, 0) }))
+		wh, err := NewWebhook(secret, WithClock(func() time.Time { return time.Unix(now, 0) }))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func FuzzVerify(f *testing.F) {
 		header.Set(headerTimestamp, timestamp)
 		header.Set(headerSignature, signature)
 
-		event, err := verifier.Verify(body, header)
+		event, err := wh.Verify(body, header)
 		if (event == nil) == (err == nil) {
 			t.Fatalf("got %+v and %v", event, err)
 		}

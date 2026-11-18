@@ -45,7 +45,9 @@ Each file is a request body, byte for byte. The directory says what an SDK must 
 
 `valid/<type>.json` is one event of each type in the schema. `valid/<type>.nulls.json` is the same event with every field that may be null set to null; it is made mechanically and need not be an event Cimento would send.
 
-An event of a known type whose `data` does not fit the type is in `open/`: an SDK accepts it and hands over the data as it was sent. An SDK also accepts an event of a known type whose `data` lacks a field.
+An SDK hands over an event as its type only when the `data` fits the type: every field the schema lists is there, none is null unless the schema allows it, and each is of the right kind. Fields the schema does not list are ignored, and so are values outside a field's known values.
+
+Data that does not fit is still accepted. The SDK hands it over as it does an event of a type it does not know, with the data as it was sent. The `known-type-*` files in `open/` are such events; every other file in `open/` whose type the schema has is handed over as its type.
 
 ## Where the values come from
 

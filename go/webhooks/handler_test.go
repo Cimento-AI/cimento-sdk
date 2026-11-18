@@ -24,13 +24,13 @@ func deliveryCase(t *testing.T) signatureCase {
 func serve(t *testing.T, c signatureCase, method string, body io.Reader, handle func(event *Event) error) (*http.Response, *Event, error) {
 	t.Helper()
 
-	verifier, err := verifierFor(c)
+	wh, err := webhookFor(c)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var handled *Event
 	var rejected error
-	handler := Handler(verifier, func(_ context.Context, event *Event) error {
+	handler := Handler(wh, func(_ context.Context, event *Event) error {
 		handled = event
 		if handle != nil {
 			return handle(event)
@@ -167,11 +167,11 @@ func TestHandlerWorksWithoutOnReject(t *testing.T) {
 	t.Parallel()
 
 	c := deliveryCase(t)
-	verifier, err := verifierFor(c)
+	wh, err := webhookFor(c)
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler := Handler(verifier, func(context.Context, *Event) error { return nil })
+	handler := Handler(wh, func(context.Context, *Event) error { return nil })
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/", strings.NewReader("tampered")))
 	if recorder.Code != http.StatusBadRequest {
@@ -179,16 +179,16 @@ func TestHandlerWorksWithoutOnReject(t *testing.T) {
 	}
 }
 
-func TestHandlerNeedsAVerifierAndAFunction(t *testing.T) {
+func TestHandlerNeedsAWebhookAndAFunction(t *testing.T) {
 	t.Parallel()
 
-	verifier, err := verifierFor(deliveryCase(t))
+	wh, err := webhookFor(deliveryCase(t))
 	if err != nil {
 		t.Fatal(err)
 	}
 	for name, build := range map[string]func(){
-		"no verifier": func() { Handler(nil, func(context.Context, *Event) error { return nil }) },
-		"no function": func() { Handler(verifier, nil) },
+		"no wh":       func() { Handler(nil, func(context.Context, *Event) error { return nil }) },
+		"no function": func() { Handler(wh, nil) },
 	} {
 		func() {
 			defer func() {

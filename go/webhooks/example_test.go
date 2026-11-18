@@ -13,7 +13,7 @@ import (
 )
 
 func ExampleHandler() {
-	verifier, err := webhooks.NewVerifier(os.Getenv("CIMENTO_WEBHOOK_SECRET"))
+	wh, err := webhooks.NewWebhook(os.Getenv("CIMENTO_WEBHOOK_SECRET"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func ExampleHandler() {
 		return nil
 	}
 
-	http.Handle("/webhooks/cimento", webhooks.Handler(verifier, handle,
+	http.Handle("/webhooks/cimento", webhooks.Handler(wh, handle,
 		webhooks.OnReject(func(r *http.Request, err error) {
 			log.Printf("refused a webhook from %s: %v", r.RemoteAddr, err)
 		}),
@@ -42,8 +42,8 @@ func ExampleHandler() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func ExampleVerifier_Verify() {
-	verifier, err := webhooks.NewVerifier(os.Getenv("CIMENTO_WEBHOOK_SECRET"))
+func ExampleWebhook_Verify() {
+	wh, err := webhooks.NewWebhook(os.Getenv("CIMENTO_WEBHOOK_SECRET"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func ExampleVerifier_Verify() {
 			http.Error(w, "", http.StatusBadRequest)
 			return
 		}
-		event, err := verifier.Verify(body, r.Header)
+		event, err := wh.Verify(body, r.Header)
 		switch {
 		case errors.Is(err, webhooks.ErrInvalidSignature), errors.Is(err, webhooks.ErrTimestampTooOld):
 			http.Error(w, "", http.StatusUnauthorized)
@@ -72,16 +72,16 @@ func ExampleVerifier_Verify() {
 }
 
 // While an endpoint's secret is being rotated, Cimento signs with the old and
-// the new secret for 24 hours. A Verifier that holds both accepts either.
+// the new secret for 24 hours. A Webhook that holds both accepts either.
 func ExampleWithAdditionalSecrets() {
-	verifier, err := webhooks.NewVerifier(
+	wh, err := webhooks.NewWebhook(
 		os.Getenv("CIMENTO_WEBHOOK_SECRET"),
 		webhooks.WithAdditionalSecrets(os.Getenv("CIMENTO_WEBHOOK_PREVIOUS_SECRET")),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = verifier
+	_ = wh
 }
 
 func ExampleParse() {
