@@ -166,7 +166,7 @@ jobs:
           fi
 
       - name: Publish, as a dry run
-        run: npm publish --dry-run --access public package/*.tgz
+        run: npm publish --dry-run --access public ./package/*.tgz
 
   # The release. It waits for an approval: the `release` environment has
   # required reviewers. npm trusts this workflow in that environment, so there
@@ -209,8 +209,10 @@ jobs:
             exit 1
           fi
 
+      # The path starts with ./ because npm reads "package/file" as a GitHub
+      # repository to fetch.
       - name: Publish
-        run: npm publish --access public package/*.tgz
+        run: npm publish --access public ./package/*.tgz
 
       - name: Create the GitHub release
         env:
