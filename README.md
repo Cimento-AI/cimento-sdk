@@ -48,7 +48,9 @@ make check-deliveries DELIVERIES=<dir>    # recorded requests
 
 A recorded request is two files with one name: `<name>.body`, the request's body byte for byte, and `<name>.json`, an object with `headers` (each name to a list of values) and `receivedAt` (when it arrived). Each is verified as a receiver would have verified it at that time, with the secrets in `CIMENTO_WEBHOOK_SECRETS`, separated by commas.
 
-CI runs `check-events` over the valid fixtures, so the two SDKs are tested against each other as well as against the fixtures.
+A file is also a problem when the two SDKs read it differently: another type, another time, or another value for a field of the event's type.
+
+`make check-fixtures` holds the SDKs to each other over the shared event fixtures. `make test` and CI run it.
 
 ## Security
 

@@ -37,34 +37,44 @@ type Event struct {
 // An event of a type this version of the package does not know is not an
 // error, and nor is a field it does not know.
 func Parse(body []byte) (*Event, error) {
-	var envelope struct {
-		ID         *string         `json:"id"`
-		Type       *string         `json:"type"`
-		OccurredAt *string         `json:"occurredAt"`
-		Data       json.RawMessage `json:"data"`
-	}
+	// Into a map, and not a struct: encoding/json matches a struct's keys
+	// without regard to case, so "ID" would be read as the id. The contract's
+	// keys are spelt one way, and the TypeScript SDK reads only that spelling.
+	var envelope map[string]json.RawMessage
 	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidEvent, err)
 	}
+	text := func(key string) (string, bool) {
+		var value *string
+		if json.Unmarshal(envelope[key], &value) != nil || value == nil {
+			return "", false
+		}
+		return *value, true
+	}
+	id, hasID := text("id")
+	eventType, hasType := text("type")
+	sent, hasTime := text("occurredAt")
+	data := envelope["data"]
 	switch {
-	case envelope.ID == nil || *envelope.ID == "":
+	case !hasID || id == "":
 		return nil, fmt.Errorf("%w: it has no id", ErrInvalidEvent)
-	case envelope.Type == nil || *envelope.Type == "":
+	case !hasType || eventType == "":
 		return nil, fmt.Errorf("%w: it has no type", ErrInvalidEvent)
-	case envelope.OccurredAt == nil:
+	case !hasTime:
 		return nil, fmt.Errorf("%w: it has no occurredAt", ErrInvalidEvent)
-	case !bytes.HasPrefix(bytes.TrimSpace(envelope.Data), []byte("{")):
+	case !bytes.HasPrefix(bytes.TrimSpace(data), []byte("{")):
 		return nil, fmt.Errorf("%w: its data is not an object", ErrInvalidEvent)
 	}
-	occurredAt, isTime := parseTime(*envelope.OccurredAt)
+	occurredAt, isTime := parseTime(sent)
 	if !isTime {
 		return nil, fmt.Errorf("%w: its occurredAt is not a time", ErrInvalidEvent)
 	}
 
-	event := &Event{ID: *envelope.ID, Type: *envelope.Type, OccurredAt: occurredAt, RawData: envelope.Data}
-	payload, known := newPayload(event.Type)
-	if known && fits(envelope.Data, reflect.TypeOf(payload).Elem()) && json.Unmarshal(envelope.Data, payload) == nil {
-		event.Data = payload
+	event := &Event{ID: id, Type: eventType, OccurredAt: occurredAt, RawData: data}
+	if payload, known := newPayload(event.Type); known {
+		if fitted, ok := fit(data, reflect.TypeOf(payload).Elem()); ok && json.Unmarshal(fitted, payload) == nil {
+			event.Data = payload
+		}
 	}
 	return event, nil
 }
@@ -110,51 +120,60 @@ func parseTime(text string) (time.Time, bool) {
 	return parsed, err == nil
 }
 
-// fits reports whether data has every field of a payload struct, with null
-// only where the field is a pointer, and with times written as parseTime
-// reads them. Decoding alone would not say: it leaves
-// a field that is missing or null at its zero value, which a receiver could
-// not tell from a value Cimento sent.
-func fits(data json.RawMessage, payload reflect.Type) bool {
+// fit returns data cut down to the fields of a payload struct, under exactly
+// the keys the struct names, and whether data has every one of them with null
+// only where the field is a pointer and with times written as parseTime reads
+// them.
+//
+// Decoding data itself would say neither. It leaves a field that is missing
+// or null at its zero value, which a receiver could not tell from a value
+// Cimento sent, and it would take a key spelt in another case for the field.
+func fit(data json.RawMessage, payload reflect.Type) (json.RawMessage, bool) {
 	var fields map[string]json.RawMessage
 	if json.Unmarshal(data, &fields) != nil || fields == nil {
-		return false
+		return nil, false
 	}
+	fitted := make(map[string]json.RawMessage, payload.NumField())
 	for i := range payload.NumField() {
 		field := payload.Field(i)
-		value, present := fields[field.Tag.Get("json")]
+		key := field.Tag.Get("json")
+		value, present := fields[key]
 		if !present {
-			return false
+			return nil, false
 		}
 		isNull := string(bytes.TrimSpace(value)) == "null"
 		switch {
 		case isNull:
 			if field.Type.Kind() != reflect.Pointer {
-				return false
+				return nil, false
 			}
 		case field.Type == timeType || field.Type == reflect.PointerTo(timeType):
 			var text string
 			if json.Unmarshal(value, &text) != nil {
-				return false
+				return nil, false
 			}
 			if _, isTime := parseTime(text); !isTime {
-				return false
+				return nil, false
 			}
-		case field.Type.Kind() == reflect.Struct && field.Type != timeType:
-			if !fits(value, field.Type) {
-				return false
+		case field.Type.Kind() == reflect.Struct:
+			nested, ok := fit(value, field.Type)
+			if !ok {
+				return nil, false
 			}
+			value = nested
 		case field.Type.Kind() == reflect.Slice:
 			var items []json.RawMessage
 			if json.Unmarshal(value, &items) != nil {
-				return false
+				return nil, false
 			}
 			for _, item := range items {
 				if string(bytes.TrimSpace(item)) == "null" {
-					return false
+					return nil, false
 				}
 			}
 		}
+		fitted[key] = value
 	}
-	return true
+	encoded, err := json.Marshal(fitted)
+	return encoded, err == nil
 }
