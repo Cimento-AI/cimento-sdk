@@ -100,3 +100,17 @@ jobs:
 
       - name: Test
         run: pnpm -r test
+
+  # The one check branch protection requires, so the matrices above can change
+  # without the protection rule changing. It runs even when a job it needs has
+  # failed: a skipped required check would count as passing.
+  tests:
+    name: Run Tests
+    if: always()
+    needs: [go, typescript]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to have passed
+        run: |
+          echo "go: ${{ needs.go.result }}, typescript: ${{ needs.typescript.result }}"
+          [ "${{ needs.go.result }}" = "success" ] && [ "${{ needs.typescript.result }}" = "success" ]
