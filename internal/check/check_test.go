@@ -23,7 +23,7 @@ func checked(t *testing.T, mode string, dir string) ([]string, string) {
 	t.Helper()
 
 	var out bytes.Buffer
-	if _, err := run(root, mode, dir, false, &out); err != nil {
+	if _, err := run(root, mode, dir, false, false, false, &out); err != nil {
 		t.Fatal(err)
 	}
 	var wrong []string
@@ -182,52 +182,103 @@ func TestWhatCannotBeCheckedIsAnErrorAndNotAPass(t *testing.T) {
 	var out bytes.Buffer
 
 	empty := t.TempDir()
-	if _, err := run(root, modeEvents, empty, false, &out); !errors.Is(err, ErrInput) {
+	if _, err := run(root, modeEvents, empty, false, false, false, &out); !errors.Is(err, ErrInput) {
 		t.Errorf("an empty directory: %v", err)
 	}
-	if _, err := run(root, modeEvents, filepath.Join(empty, "missing"), false, &out); !errors.Is(err, ErrInput) {
+	if _, err := run(root, modeEvents, filepath.Join(empty, "missing"), false, false, false, &out); !errors.Is(err, ErrInput) {
 		t.Errorf("a directory that is not there: %v", err)
 	}
 
 	recordedDir := t.TempDir()
 	record(t, recordedDir, "0001-as-sent", real[0])
 	t.Setenv(secretsEnv, "")
-	if _, err := run(root, modeDeliveries, recordedDir, false, &out); !errors.Is(err, ErrInput) {
+	if _, err := run(root, modeDeliveries, recordedDir, false, false, false, &out); !errors.Is(err, ErrInput) {
 		t.Errorf("no secrets: %v", err)
 	}
 	t.Setenv(secretsEnv, real[0].Secrets[0])
 	if err := os.Remove(filepath.Join(recordedDir, "0001-as-sent.json")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := run(root, modeDeliveries, recordedDir, false, &out); !errors.Is(err, ErrInput) {
+	if _, err := run(root, modeDeliveries, recordedDir, false, false, false, &out); !errors.Is(err, ErrInput) {
 		t.Errorf("a body with no .json beside it: %v", err)
 	}
-	if _, err := run(filepath.Join(root, "internal"), modeEvents, fixtures+"/events/valid", false, &out); !errors.Is(err, ErrInput) {
+	if _, err := run(filepath.Join(root, "internal"), modeEvents, fixtures+"/events/valid", false, false, false, &out); !errors.Is(err, ErrInput) {
 		t.Errorf("a root with no schema: %v", err)
 	}
 }
 
 func TestTheSDKsDisagreeingIsAProblemOnTheFileTheyDisagreeOn(t *testing.T) {
-	known := map[string]bool{"webhook.test": true}
-	ours := []result{
-		{File: "a.json", ID: "1", Type: "webhook.test", Typed: true},
-		{File: "b.json", ID: "2", Type: "webhook.test", Typed: true},
+	known, err := readSchema(root + "/" + schemaFile)
+	if err != nil {
+		t.Fatal(err)
 	}
-	same := append([]result(nil), ours...)
-	if problems := problemsIn(ours, same, known); len(problems) != 0 {
-		t.Errorf("the same results: %v", problems)
+	completed := func(data string) result {
+		return result{
+			File: "b.json", ID: "2", Type: "training.assignment.completed", Typed: true,
+			OccurredAt: "2026-11-12T15:02:11.902Z", Data: json.RawMessage(data),
+		}
+	}
+	// What Go hands over: the struct's fields, and times as it writes them.
+	fromGo := `{"assignmentId":"a","campaignId":"c","user":{"id":"u","email":null},"completedAt":"2026-11-12T15:02:11.5Z","completedBy":"learner"}`
+	// What TypeScript hands over: the object as sent, unknown fields and all.
+	fromTypeScript := `{"assignmentId":"a","campaignId":"c","user":{"id":"u","email":null,"department":"x"},"completedAt":"2026-11-12T15:02:11.500Z","completedBy":"learner","score":92}`
+	ours := []result{{File: "a.json", ID: "1", Type: "webhook.test", Typed: true, OccurredAt: "2026-11-12T16:50:00Z", Data: json.RawMessage(`{"endpointId":"e"}`)}, completed(fromGo)}
+
+	theirs := []result{ours[0], completed(fromTypeScript)}
+	theirs[1].OccurredAt = "2026-11-12T15:02:11.902000Z"
+	if problems := problemsIn(ours, theirs, known, false); len(problems) != 0 {
+		t.Errorf("the same event, written each SDK's way: %v", problems)
 	}
 
-	theirs := append([]result(nil), ours...)
-	theirs[1].Typed = false
-	problems := problemsIn(ours, theirs, known)
-	if len(problems) != 1 || problems[0].File != "b.json" || !strings.Contains(problems[0].What, "the SDKs disagree") {
-		t.Errorf("one SDK typed it and one did not: %v", problems)
+	for name, differ := range map[string]func(theirs *result){
+		"a field read differently": func(theirs *result) {
+			theirs.Data = json.RawMessage(strings.Replace(fromTypeScript, `"learner"`, `"admin"`, 1))
+		},
+		"a nested field read differently": func(theirs *result) {
+			theirs.Data = json.RawMessage(strings.Replace(fromTypeScript, `"email":null`, `"email":"a@example.com"`, 1))
+		},
+		"a time read differently": func(theirs *result) {
+			theirs.Data = json.RawMessage(strings.Replace(fromTypeScript, "11.500Z", "12.500Z", 1))
+		},
+		"a field TypeScript lacks": func(theirs *result) {
+			theirs.Data = json.RawMessage(strings.Replace(fromTypeScript, `"campaignId":"c",`, ``, 1))
+		},
+		"another occurredAt":             func(theirs *result) { theirs.OccurredAt = "2026-11-12T15:02:12.902Z" },
+		"typed by one and not the other": func(theirs *result) { theirs.Typed = false },
+		"another id":                     func(theirs *result) { theirs.ID = "3" },
+		"refused by one":                 func(theirs *result) { *theirs = result{File: "b.json", Error: "invalid_event"} },
+	} {
+		theirs := []result{ours[0], completed(fromTypeScript)}
+		differ(&theirs[1])
+		problems := problemsIn(ours, theirs, known, false)
+		if len(problems) != 1 || problems[0].File != "b.json" || !strings.Contains(problems[0].What, "the SDKs disagree") {
+			t.Errorf("%s: %v", name, problems)
+		}
 	}
-	if problems := problemsIn(ours, theirs[:1], known); len(problems) != 1 || problems[0].File != "b.json" {
+
+	if problems := problemsIn(ours, theirs[:1], known, false); len(problems) != 1 || problems[0].File != "b.json" {
 		t.Errorf("TypeScript checked fewer files: %v", problems)
 	}
-	if problems := problemsIn(ours[:1], theirs, known); len(problems) != 1 || problems[0].File != "b.json" {
+	if problems := problemsIn(ours[:1], theirs, known, false); len(problems) != 1 || problems[0].File != "b.json" {
 		t.Errorf("TypeScript checked more files: %v", problems)
+	}
+}
+
+func TestAgreeOnlyLeavesOutWhatBothSDKsAreRightToRefuse(t *testing.T) {
+	known, err := readSchema(root + "/" + schemaFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refused := []result{{File: "a.json", Error: "invalid_event"}, {File: "b.json", ID: "1", Type: "billing.invoice.paid", OccurredAt: "2026-11-12T16:50:00Z", Data: json.RawMessage(`{}`)}}
+	if problems := problemsIn(refused, refused, known, false); len(problems) != 2 {
+		t.Errorf("without agree-only: %v", problems)
+	}
+	if problems := problemsIn(refused, refused, known, true); len(problems) != 0 {
+		t.Errorf("with agree-only: %v", problems)
+	}
+	other := []result{refused[0], refused[1]}
+	other[0].Error = "missing_header"
+	if problems := problemsIn(refused, other, known, true); len(problems) != 1 || problems[0].File != "a.json" {
+		t.Errorf("refused for different reasons: %v", problems)
 	}
 }

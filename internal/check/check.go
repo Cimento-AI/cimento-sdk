@@ -45,6 +45,10 @@ type result struct {
 	// Typed is whether the event came back as its type and not as an event
 	// the SDK does not know.
 	Typed bool `json:"typed"`
+	// OccurredAt and Data are the event as the SDK handed it over, so that
+	// what the two SDKs read, and not only that they read it, is compared.
+	OccurredAt string          `json:"occurredAt"`
+	Data       json.RawMessage `json:"data"`
 }
 
 // codes are the shared fixtures' names for the Go SDK's errors.
@@ -129,6 +133,13 @@ func checkWithGo(mode string, dir string, names []string) ([]result, error) {
 			checked.Error = codeOf(err)
 		} else {
 			checked.ID, checked.Type, checked.Typed = event.ID, event.Type, event.Data != nil
+			checked.OccurredAt = event.OccurredAt.UTC().Format(time.RFC3339Nano)
+			checked.Data = event.RawData
+			if checked.Typed {
+				if checked.Data, err = json.Marshal(event.Data); err != nil {
+					return nil, err
+				}
+			}
 		}
 		results = append(results, checked)
 	}

@@ -1,12 +1,13 @@
 # The cimento-api checkout the event schema is copied from.
 CIMENTO_API ?= ../cimento-api
 
-.PHONY: test lint generate sync-schema check-events check-deliveries
+.PHONY: test lint generate sync-schema check-events check-deliveries check-fixtures
 
 test:
 	cd go/webhooks && go vet ./... && go test -race -shuffle=on -count=1 ./...
 	cd internal && go vet ./... && go test -race -shuffle=on -count=1 ./...
 	cd typescript && pnpm -r test
+	$(MAKE) check-fixtures
 
 lint:
 	cd go/webhooks && go mod tidy -diff && golangci-lint run ./...
@@ -34,9 +35,18 @@ sync-schema:
 check-events:
 	@test -n "$(EVENTS)" || { echo "usage: make check-events EVENTS=<dir>"; exit 2; }
 	cd typescript && pnpm --filter @cimento/webhooks build >/dev/null
-	cd internal && go run ./check -root .. -events "$(abspath $(EVENTS))"
+	@dir="$$(cd "$(EVENTS)" && pwd)" && cd internal && go run ./check -root .. -events "$$dir"
 
 check-deliveries:
 	@test -n "$(DELIVERIES)" || { echo "usage: make check-deliveries DELIVERIES=<dir>"; exit 2; }
 	cd typescript && pnpm --filter @cimento/webhooks build >/dev/null
-	cd internal && go run ./check -root .. -deliveries "$(abspath $(DELIVERIES))"
+	@dir="$$(cd "$(DELIVERIES)" && pwd)" && cd internal && go run ./check -root .. -deliveries "$$dir"
+
+# The two SDKs against each other, over the shared fixtures: every valid
+# fixture must be read as its type by both, and every other event fixture must
+# be refused, or left untyped, by both alike.
+check-fixtures:
+	cd typescript && pnpm --filter @cimento/webhooks build >/dev/null
+	cd internal && go run ./check -root .. -quiet -events ../fixtures/webhooks/events/valid
+	cd internal && go run ./check -root .. -quiet -agree-only -events ../fixtures/webhooks/events/open
+	cd internal && go run ./check -root .. -quiet -agree-only -events ../fixtures/webhooks/events/invalid

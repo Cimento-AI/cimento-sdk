@@ -33,8 +33,8 @@ func checkWithTypeScript(root string, mode string, dir string) ([]result, error)
 }
 
 // run checks dir and reports to out. It returns how many problems it found.
-func run(root string, mode string, dir string, both bool, out io.Writer) (int, error) {
-	known, err := eventTypes(filepath.Join(root, schemaFile))
+func run(root string, mode string, dir string, both bool, agreeOnly bool, quiet bool, out io.Writer) (int, error) {
+	known, err := readSchema(filepath.Join(root, schemaFile))
 	if err != nil {
 		return 0, err
 	}
@@ -54,8 +54,8 @@ func run(root string, mode string, dir string, both bool, out io.Writer) (int, e
 			return 0, err
 		}
 	}
-	problems := problemsIn(checked, other, known)
-	if _, err := io.WriteString(out, report(sdks, checked, problems)); err != nil {
+	problems := problemsIn(checked, other, known, agreeOnly)
+	if _, err := io.WriteString(out, report(sdks, checked, problems, quiet)); err != nil {
 		return 0, err
 	}
 	return len(problems), nil
@@ -66,6 +66,8 @@ func main() {
 	events := flag.String("events", "", "a directory in which every file is an event body")
 	deliveries := flag.String("deliveries", "", "a directory of recorded requests")
 	only := flag.Bool("go-only", false, "check with the Go SDK alone")
+	agree := flag.Bool("agree-only", false, "report only where the SDKs disagree, for files they are right to refuse or leave untyped")
+	quiet := flag.Bool("quiet", false, "print the count and the problems, and not a line for each file")
 	flag.Parse()
 
 	mode, dir := modeEvents, *events
@@ -77,7 +79,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	problems, err := run(*root, mode, dir, !*only, os.Stdout)
+	problems, err := run(*root, mode, dir, !*only, *agree, *quiet, os.Stdout)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "check:", err)
 		if errors.Is(err, ErrInput) {

@@ -112,11 +112,12 @@ func TestParseAcceptsWhatItDoesNotKnow(t *testing.T) {
 		t.Errorf("a known type that does not fit: %+v", misshapen)
 	}
 	for name, eventType := range map[string]string{
-		"known-type-missing-field": EventTypeTrainingCampaignLaunched,
-		"known-type-null-field":    EventTypeTrainingAssignmentCompleted,
-		"known-type-null-item":     EventTypeAgentHubSettingsUpdated,
-		"known-type-comma-time":    EventTypeTrainingAssignmentCompleted,
-		"known-type-short-hour":    EventTypeTrainingExemptionCreated,
+		"known-type-missing-field":         EventTypeTrainingCampaignLaunched,
+		"known-type-null-field":            EventTypeTrainingAssignmentCompleted,
+		"known-type-null-item":             EventTypeAgentHubSettingsUpdated,
+		"known-type-comma-time":            EventTypeTrainingAssignmentCompleted,
+		"known-type-short-hour":            EventTypeTrainingExemptionCreated,
+		"known-type-field-in-another-case": EventTypePhishingRoundStarted,
 	} {
 		if unfit := parse(name); unfit.Type != eventType || unfit.Data != nil || len(unfit.RawData) == 0 {
 			t.Errorf("%s: %+v", name, unfit)
@@ -129,6 +130,11 @@ func TestParseAcceptsWhatItDoesNotKnow(t *testing.T) {
 	values, ok := parse("unknown-values").Data.(*AgentHubFindingCreatedPayload)
 	if !ok || values.Kind != "drift" || values.Response != "quarantine" {
 		t.Errorf("unknown values: %+v", values)
+	}
+	// A key in another case is another key, not the field's.
+	cased, ok := parse("unknown-field-in-another-case").Data.(*TrainingAssignmentCompletedPayload)
+	if !ok || cased.CompletedBy != "learner" || cased.User.Email == nil || *cased.User.Email != "ada.lovelace@example.com" {
+		t.Errorf("a field's key in another case: %+v", cased)
 	}
 	keys, ok := parse("unknown-changed-key").Data.(*AgentHubSettingsUpdatedPayload)
 	if !ok || len(keys.ChangedKeys) != 2 || keys.ChangedKeys[1] != "alerts.daily_digest" {

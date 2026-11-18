@@ -46,13 +46,23 @@ const names = readdirSync(dir)
 const results = [];
 for (const name of names) {
   const body = readFileSync(join(dir, name));
-  const result = { file: name, error: "", id: "", type: "", typed: false };
+  const result = {
+    file: name,
+    error: "",
+    id: "",
+    type: "",
+    typed: false,
+    occurredAt: "",
+    data: null,
+  };
   try {
     const event =
       mode === "events" ? parseEvent(body) : await verify(name, body);
     result.id = event.id;
     result.type = event.type;
     result.typed = event.known;
+    result.occurredAt = event.occurredAt;
+    result.data = event.data;
   } catch (error) {
     result.error =
       error instanceof WebhookVerificationError
