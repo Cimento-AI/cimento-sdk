@@ -1,0 +1,14 @@
+{
+  "id": "a5b6c617-f234-4d47-8e51-6c27d8e9fa60",
+  "type": "training.assignment.created",
+  "occurredAt": "2026-11-09T09:00:14.215Z",
+  "data": {
+    "assignmentId": "b2d7c1a4-3f5e-4a8b-9c6d-1e2f3a4b5c6d",
+    "campaignId": "8a1f2e3d-4c5b-4a69-8877-665544332211",
+    "user": {
+      "id": "0f9e8d7c-6b5a-4433-9221-100f0e0d0c0b",
+      "email": null
+    },
+    "dueDate": null
+  }
+}

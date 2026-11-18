@@ -62,6 +62,39 @@ jobs:
       - name: Test
         run: go test -race -shuffle=on -count=1 ./...
 
+  # The checks on the shared fixtures. This module is repository tooling and is
+  # not part of any SDK, so it runs on one Go version.
+  tooling:
+    name: Tooling
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: internal
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: internal/go.sum
+
+      - name: Verify go.mod is tidy
+        run: go mod tidy -diff
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.14.0
+          working-directory: internal
+
+      - name: Test
+        run: go test -race -shuffle=on -count=1 ./...
+
   typescript:
     name: TypeScript (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
@@ -107,10 +140,10 @@ jobs:
   tests:
     name: Run Tests
     if: always()
-    needs: [go, typescript]
+    needs: [go, tooling, typescript]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to have passed
         run: |
-          echo "go: ${{ needs.go.result }}, typescript: ${{ needs.typescript.result }}"
-          [ "${{ needs.go.result }}" = "success" ] && [ "${{ needs.typescript.result }}" = "success" ]
+          echo "go: ${{ needs.go.result }}, tooling: ${{ needs.tooling.result }}, typescript: ${{ needs.typescript.result }}"
+          [ "${{ needs.go.result }}" = "success" ] && [ "${{ needs.tooling.result }}" = "success" ] && [ "${{ needs.typescript.result }}" = "success" ]

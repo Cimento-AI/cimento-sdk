@@ -1,0 +1,8 @@
+{
+  "id": "c7a1e2b3-4d5f-4a6b-8c9d-0e1f2a3b4c5d",
+  "type": "webhook.test",
+  "occurredAt": "2026-11-12T16:50:00.124Z",
+  "data": {
+    "endpointId": "3b9d5c2e-7f1a-4e8b-a6c4-9d0e1f2a3b4c"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "c7d8e839-1456-4f69-8a73-8e49fa0b1c82",
+  "type": "training.policy.acknowledged",
+  "occurredAt": "2026-11-10T08:31:54.006Z",
+  "data": {
+    "acknowledgmentId": "6a5b4c3d-2e1f-4a0b-9c8d-7e6f5a4b3c2d",
+    "policyId": null,
+    "user": {
+      "id": "1a0f9e8d-7c6b-4544-8332-211a0f0e0d0c",
+      "email": null
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "3e4f5fa0-8bcd-4ad0-9bea-f5b0617283f9",
+  "type": "agent_hub.finding.closed",
+  "occurredAt": "2026-11-12T12:02:41.300Z",
+  "data": {
+    "findingId": "a0b1c2d3-e4f5-4a6b-8c7d-9e0f1a2b3c4d",
+    "ruleId": "cimento_guard_installed"
+  }
+}

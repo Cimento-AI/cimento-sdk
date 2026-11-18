@@ -15,7 +15,15 @@ Public SDKs for Cimento. Each SDK is its own Go module (`go/<name>`) or npm pack
 
 ## Both SDKs behave the same
 
-A change to how one SDK verifies or parses is a change to both. They are tested against the same shared fixtures.
+A change to how one SDK verifies or parses is a change to both. They are tested against the same shared fixtures, in `fixtures/webhooks`, which has a README.
+
+- A change in behaviour starts with a fixture. Then both SDKs are made to pass it.
+- An event fixture is a request body byte for byte. Do not reformat one.
+- `internal/fixtures` checks the fixtures against the schema and against themselves. It shares no code with the SDKs; keep it that way.
+
+## `internal/`
+
+Repository tooling, in a Go module of its own. It may have dependencies. The SDK modules may not.
 
 ## Go
 

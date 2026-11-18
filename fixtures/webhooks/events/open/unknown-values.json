@@ -1,0 +1,17 @@
+{
+  "id": "7f2e3d4c-5b6a-4c7d-9e8f-9a0b1c2d3e4f",
+  "type": "agent_hub.finding.created",
+  "occurredAt": "2026-11-12T10:31:07.440Z",
+  "data": {
+    "findingId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
+    "kind": "drift",
+    "ruleId": "unsigned_agent_binaries",
+    "ruleName": "Unsigned agent binaries",
+    "title": "An agent ran an unsigned binary",
+    "response": "quarantine",
+    "user": {
+      "id": "7a6b5c4d-3e2f-4a1b-8c9d-0e1f2a3b4c5d",
+      "email": "ada.lovelace@example.com"
+    }
+  }
+}

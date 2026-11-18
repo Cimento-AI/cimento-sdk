@@ -1,0 +1,13 @@
+{
+  "id": "e9fa0a5b-3678-4b8b-8c95-a06b1c2d3ea4",
+  "type": "training.exemption.updated",
+  "occurredAt": "2026-11-11T09:18:22.954Z",
+  "data": {
+    "user": {
+      "id": "2b1a0f9e-8d7c-4655-9443-322b1a0f0e0d",
+      "email": null
+    },
+    "endsAt": null,
+    "actorId": null
+  }
+}

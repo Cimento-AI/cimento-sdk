@@ -16,6 +16,8 @@ Each SDK is its own Go module or npm package, with its own version.
 
 ```
 schema/webhooks/     the JSON Schema of every webhook event; the SDKs' types come from it
+fixtures/webhooks/   signature cases and event bodies that both SDKs are tested against
+internal/            tooling for this repository, such as the check on the fixtures
 go/webhooks/         the Go module
 typescript/          a pnpm workspace
   webhooks/          the @cimento/webhooks package

@@ -1,0 +1,10 @@
+{
+  "id": "4f5a60b1-9cde-4be1-8cfb-06c172839400",
+  "type": "agent_hub.rule.updated",
+  "occurredAt": "2026-11-11T16:08:19.027Z",
+  "data": {
+    "ruleId": "unapproved_mcp_servers",
+    "response": "nudge",
+    "actorId": null
+  }
+}

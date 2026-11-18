@@ -1,0 +1,9 @@
+{
+  "id": "5a6b71c2-adef-4cf2-9d0c-17d283940511",
+  "type": "agent_hub.settings.updated",
+  "occurredAt": "2026-11-11T16:20:55.489Z",
+  "data": {
+    "changedKeys": ["enforcement.enabled", "alerts.weekly_summary"],
+    "actorId": "3c2b1a0f-9e8d-4766-8554-433c2b1a0f0e"
+  }
+}

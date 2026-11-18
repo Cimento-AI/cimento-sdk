@@ -1,0 +1,9 @@
+{
+  "id": "8d3eae9f-7abc-4bcf-8cd9-e4afb0c1d2e8",
+  "type": "phishing.program.reset",
+  "occurredAt": "2026-11-12T17:45:10.655Z",
+  "data": {
+    "actorId": "3c2b1a0f-9e8d-4766-8554-433c2b1a0f0e",
+    "cancelledSends": 0
+  }
+}
