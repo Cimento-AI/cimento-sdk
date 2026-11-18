@@ -13,6 +13,10 @@ import (
 // rather than guess, because a guess would be published in two SDKs.
 var ErrUnsupported = errors.New("the schema has something the generator cannot turn into types")
 
+// ErrNotJSON is a schema file that is not JSON at all, which is a damaged
+// file and not something to teach the generator.
+var ErrNotJSON = errors.New("the schema is not JSON")
+
 const defsPrefix = "#/$defs/"
 
 type kind int
@@ -78,7 +82,7 @@ type rawSchema struct {
 
 func readModel(schema []byte) (model, error) {
 	if !json.Valid(schema) {
-		return model{}, errors.New("the schema is not JSON")
+		return model{}, ErrNotJSON
 	}
 	var raw rawSchema
 	if err := decode(schema, &raw); err != nil {
