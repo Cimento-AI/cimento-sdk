@@ -179,8 +179,10 @@ func TestTheGeneratorRefusesWhatItCannotType(t *testing.T) {
 func TestASchemaThatIsNotJSONIsNotCalledUnsupported(t *testing.T) {
 	t.Parallel()
 
-	if _, err := readModel([]byte(`{"oneOf": [`)); err == nil || errors.Is(err, ErrUnsupported) {
-		t.Errorf("a truncated file: %v", err)
+	for name, schema := range map[string]string{"a truncated file": `{"oneOf": [`, "an empty file": ``, "text": `oneOf`} {
+		if _, err := readModel([]byte(schema)); !errors.Is(err, ErrNotJSON) || errors.Is(err, ErrUnsupported) {
+			t.Errorf("%s: %v", name, err)
+		}
 	}
 }
 
