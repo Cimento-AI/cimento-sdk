@@ -127,9 +127,12 @@ func TestHandlerTakesOnlyPost(t *testing.T) {
 
 	c := deliveryCase(t)
 	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodHead} {
-		response, event, _ := serve(t, c, method, strings.NewReader(c.Body), nil)
+		response, event, rejected := serve(t, c, method, strings.NewReader(c.Body), nil)
 		if response.StatusCode != http.StatusMethodNotAllowed || response.Header.Get("Allow") != http.MethodPost || event != nil {
 			t.Errorf("%s: status %d, Allow %q, handled %+v", method, response.StatusCode, response.Header.Get("Allow"), event)
+		}
+		if !errors.Is(rejected, ErrMethodNotAllowed) || !strings.Contains(rejected.Error(), method) {
+			t.Errorf("%s: rejected with %v", method, rejected)
 		}
 	}
 }

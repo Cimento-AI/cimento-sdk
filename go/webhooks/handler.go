@@ -3,6 +3,7 @@ package webhooks
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -51,6 +52,7 @@ func Handler(verifier *Verifier, handle func(ctx context.Context, event *Event) 
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
+		h.rejected(r, fmt.Errorf("%w, not %s", ErrMethodNotAllowed, r.Method))
 		w.Header().Set("Allow", http.MethodPost)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

@@ -54,7 +54,7 @@ http.Handle("/webhooks/cimento", webhooks.Handler(verifier, handle,
 | 400      | A webhook header is missing, or the body is not an event.                                 |
 | 405, 413 | The request is not a POST, or its body is over 1 MiB.                                     |
 
-The response never says why a request was refused. `OnReject` tells you.
+The response never says why a request was refused. `OnReject` tells you, for every refusal in the table.
 
 Cimento waits 10 seconds for the answer and may deliver an event more than once. Hand long work to something else, and de-duplicate on `event.ID`. Events can arrive out of order; `event.OccurredAt` is when each one happened.
 
@@ -88,6 +88,8 @@ The signature is over the bytes Cimento sent. A body that was parsed and written
 | `ErrTimestampTooOld`, `ErrTimestampTooNew` | the timestamp is outside the tolerance; a replayed request fails this way |
 | `ErrInvalidSignature`                      | no signature matches a secret you hold                                    |
 | `ErrInvalidEvent`                          | the body is not an event                                                  |
+
+`OnReject` can also be given `ErrMethodNotAllowed`, for a request that is not a POST, and the error from reading a body that is too large.
 
 `NewVerifier` returns `ErrMalformedSecret` for a secret that is not `whsec_` followed by base64.
 
