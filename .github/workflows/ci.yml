@@ -105,6 +105,41 @@ jobs:
             exit 1
           }
 
+  # Both SDKs read every valid fixture, and must make the same thing of each.
+  # The other jobs test each SDK against the fixtures; this one tests them
+  # against each other.
+  agreement:
+    name: SDKs agree
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache-dependency-path: internal/go.sum
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: typescript/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: typescript/.node-version
+          cache: pnpm
+          cache-dependency-path: typescript/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: pnpm install --frozen-lockfile
+
+      - name: Check the valid fixtures with both SDKs
+        run: make check-events EVENTS=fixtures/webhooks/events/valid
+
   typescript:
     name: TypeScript (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
@@ -150,10 +185,10 @@ jobs:
   tests:
     name: Run Tests
     if: always()
-    needs: [go, tooling, typescript]
+    needs: [go, tooling, agreement, typescript]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to have passed
         run: |
-          echo "go: ${{ needs.go.result }}, tooling: ${{ needs.tooling.result }}, typescript: ${{ needs.typescript.result }}"
-          [ "${{ needs.go.result }}" = "success" ] && [ "${{ needs.tooling.result }}" = "success" ] && [ "${{ needs.typescript.result }}" = "success" ]
+          echo "go: ${{ needs.go.result }}, tooling: ${{ needs.tooling.result }}, agreement: ${{ needs.agreement.result }}, typescript: ${{ needs.typescript.result }}"
+          [ "${{ needs.go.result }}" = "success" ] && [ "${{ needs.tooling.result }}" = "success" ] && [ "${{ needs.agreement.result }}" = "success" ] && [ "${{ needs.typescript.result }}" = "success" ]
