@@ -52,6 +52,10 @@ A file is also a problem when the two SDKs read it differently: another type, an
 
 `make check-fixtures` holds the SDKs to each other over the shared event fixtures. `make test` and CI run it.
 
+## Releasing
+
+See [RELEASING.md](RELEASING.md).
+
 ## Security
 
 See [SECURITY.md](SECURITY.md).

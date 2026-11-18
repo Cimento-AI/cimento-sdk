@@ -1,0 +1,195 @@
+name: Release the Go webhooks module
+
+# A tag named go/webhooks/vX.Y.Z releases that version of the Go module. See
+# RELEASING.md.
+#
+# A Go module is not uploaded anywhere: the tag is the release. What this
+# workflow does is refuse a tag that should not be one, and then confirm that
+# the public can fetch the version.
+#
+# It only releases from a public repository, and only for a tag. Anywhere
+# else, and whenever it is started by hand, it is a dry run: it checks, and
+# stops.
+on:
+  push:
+    tags:
+      - "go/webhooks/v*"
+  workflow_dispatch:
+
+concurrency:
+  group: release-go-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  MODULE: github.com/cimento-ai/cimento-sdk/go/webhooks
+
+jobs:
+  tag:
+    name: Check the tag
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.mode.outputs.release }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history, to tell whether the tagged commit is on main.
+          fetch-depth: 0
+
+      - name: Decide whether this is a release or a dry run
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if [ "$EVENT" = "push" ] && [ "$PRIVATE" = "false" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "This is a release." | tee -a "$GITHUB_STEP_SUMMARY"
+          elif [ "$EVENT" = "push" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "This is a dry run: the repository is private, and nothing is released from a private repository." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "This is a dry run: the workflow was started by hand, and only a tag releases." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # The module's path has no major version in it, so Go will only accept
+      # v0 and v1 for it. A v2 needs the path changed first.
+      - name: Require the tag to be a version Go accepts
+        id: version
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#go/webhooks/}"
+          if ! printf '%s' "$version" | grep -Eq '^v[01]\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'; then
+            echo "::error::$TAG is not a version of this module. A release is tagged go/webhooks/vMAJOR.MINOR.PATCH, with a major version of 0 or 1."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Require the module to be at the path it is released under
+        working-directory: go/webhooks
+        run: |
+          declared="$(sed -n 's/^module //p' go.mod)"
+          if [ "$declared" != "$MODULE" ]; then
+            echo "::error::go.mod declares $declared, and this workflow releases $MODULE."
+            exit 1
+          fi
+
+      - name: Require a released commit to be on main
+        if: steps.mode.outputs.release == 'true'
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::The tagged commit is not on main. Only a commit on main is released."
+            exit 1
+          fi
+
+  # What CI checks of the module, on the tagged commit.
+  test:
+    name: Go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest Go the module supports, and the newest.
+        go: ["1.26", "stable"]
+    defaults:
+      run:
+        working-directory: go/webhooks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: go/webhooks/go.mod
+
+      - name: Verify go.mod is tidy
+        run: go mod tidy -diff
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7.0.1
+        with:
+          version: v2.14.0
+          working-directory: go/webhooks
+
+      - name: Test
+        run: go test -race -shuffle=on -count=1 ./...
+
+  agreement:
+    name: SDKs agree
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: stable
+          cache-dependency-path: internal/go.sum
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          package_json_file: typescript/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: typescript/.node-version
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: pnpm install --frozen-lockfile
+
+      - name: Check the event fixtures with both SDKs
+        run: make check-fixtures
+
+  # The release. It waits for an approval: the `release` environment has
+  # required reviewers.
+  release:
+    name: Release
+    needs: [tag, test, agreement]
+    if: needs.tag.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write # to create the GitHub release
+    steps:
+      # Asking the proxy for the version makes it fetch and keep it, and fails
+      # here, and not for a customer, if the module cannot be fetched under
+      # its path. The proxy can take a moment to see a new tag.
+      - name: Fetch the version as the public does
+        env:
+          VERSION: ${{ needs.tag.outputs.version }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error "https://proxy.golang.org/$MODULE/@v/$VERSION.info"; then
+              exit 0
+            fi
+            echo "Attempt $attempt failed; waiting before the next."
+            sleep 20
+          done
+          echo "::error::The Go module proxy could not fetch $MODULE@$VERSION."
+          exit 1
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.tag.outputs.version }}
+        run: |
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "Go webhooks $VERSION" \
+            --notes "\`go get $MODULE@$VERSION\`. See [pkg.go.dev](https://pkg.go.dev/$MODULE@$VERSION)."
