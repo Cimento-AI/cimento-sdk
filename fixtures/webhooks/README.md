@@ -47,6 +47,8 @@ Each file is a request body, byte for byte. The directory says what an SDK must 
 
 An SDK hands over an event as its type only when the `data` fits the type: every field the schema lists is there, none is null unless the schema allows it, and each is of the right kind. Fields the schema does not list are ignored, and so are values outside a field's known values.
 
+A time, in the envelope or in `data`, is written as RFC 3339 writes one: `2026-11-12T15:02:11Z`, with an optional fraction after a period and `Z` or an offset such as `+05:30`. Date parsers are looser than that, each in its own way, so both SDKs check the shape themselves.
+
 Data that does not fit is still accepted. The SDK hands it over as it does an event of a type it does not know, with the data as it was sent. The `known-type-*` files in `open/` are such events; every other file in `open/` whose type the schema has is handed over as its type.
 
 ## Where the values come from

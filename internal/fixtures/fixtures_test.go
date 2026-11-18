@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -132,6 +133,10 @@ func readEvents(t *testing.T, directory string) map[string][]byte {
 	return events
 }
 
+// rfc3339 is the shape of a time. time.Parse alone is looser: it takes a comma
+// before the fraction and an hour of one digit.
+var rfc3339 = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$`)
+
 type envelope struct {
 	ID         string                     `json:"id"`
 	Type       string                     `json:"type"`
@@ -161,6 +166,9 @@ func readEnvelope(body []byte) (envelope, error) {
 	}
 	if event.ID == "" || event.Type == "" {
 		return envelope{}, fmt.Errorf("id or type is empty")
+	}
+	if !rfc3339.MatchString(event.OccurredAt) {
+		return envelope{}, fmt.Errorf("occurredAt is not written as RFC 3339 writes a time")
 	}
 	if _, err := time.Parse(time.RFC3339Nano, event.OccurredAt); err != nil {
 		return envelope{}, fmt.Errorf("occurredAt: %w", err)

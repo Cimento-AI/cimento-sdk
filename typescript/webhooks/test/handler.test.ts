@@ -124,6 +124,20 @@ test("refuses a body it cannot read whole", async () => {
   expect(broken.response.status).toBe(400);
   expect(broken.rejected?.code).toBe("body_unreadable");
 
+  // A body something has already read cannot be read again.
+  let rejected: WebhookVerificationError | undefined;
+  const handler = fetchHandler(webhookFor(delivery), () => {}, {
+    onReject: (_request, error) => (rejected = error),
+  });
+  const used = new Request("https://receiver.example.com/", {
+    method: "POST",
+    headers: delivery.headers,
+    body: delivery.body,
+  });
+  await used.text();
+  expect((await handler(used)).status).toBe(400);
+  expect(rejected?.code).toBe("body_unreadable");
+
   const empty = await serve(delivery, { body: "" });
   expect(empty.response.status).toBe(401);
   expect(empty.rejected?.code).toBe("invalid_signature");

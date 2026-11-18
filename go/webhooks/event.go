@@ -56,8 +56,8 @@ func Parse(body []byte) (*Event, error) {
 	case !bytes.HasPrefix(bytes.TrimSpace(envelope.Data), []byte("{")):
 		return nil, fmt.Errorf("%w: its data is not an object", ErrInvalidEvent)
 	}
-	occurredAt, err := time.Parse(time.RFC3339, *envelope.OccurredAt)
-	if err != nil {
+	occurredAt, isTime := parseTime(*envelope.OccurredAt)
+	if !isTime {
 		return nil, fmt.Errorf("%w: its occurredAt is not a time", ErrInvalidEvent)
 	}
 
@@ -71,8 +71,48 @@ func Parse(body []byte) (*Event, error) {
 
 var timeType = reflect.TypeFor[time.Time]()
 
+// parseTime reads an RFC 3339 time as the specification writes one, and as
+// the TypeScript SDK reads one. The standard library is looser, and not the
+// same from one Go release to the next: it has taken a comma before the
+// fraction and an hour of one digit.
+func parseTime(text string) (time.Time, bool) {
+	digits := func(from int, to int) bool {
+		for i := from; i < to; i++ {
+			if text[i] < '0' || text[i] > '9' {
+				return false
+			}
+		}
+		return true
+	}
+	// 2006-01-02T15:04:05, then an optional fraction, then Z or +07:00.
+	const date = len("2006-01-02T15:04:05")
+	if len(text) < date+1 || !digits(0, 4) || text[4] != '-' || !digits(5, 7) || text[7] != '-' || !digits(8, 10) ||
+		text[10] != 'T' || !digits(11, 13) || text[13] != ':' || !digits(14, 16) || text[16] != ':' || !digits(17, 19) {
+		return time.Time{}, false
+	}
+	zone := date
+	if text[zone] == '.' {
+		zone++
+		for zone < len(text) && text[zone] >= '0' && text[zone] <= '9' {
+			zone++
+		}
+		if zone == date+1 {
+			return time.Time{}, false
+		}
+	}
+	offset := text[zone:]
+	numeric := len(offset) == len("+07:00") && (offset[0] == '+' || offset[0] == '-') &&
+		digits(zone+1, zone+3) && offset[3] == ':' && digits(zone+4, zone+6)
+	if offset != "Z" && !numeric {
+		return time.Time{}, false
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, text)
+	return parsed, err == nil
+}
+
 // fits reports whether data has every field of a payload struct, with null
-// only where the field is a pointer. Decoding alone would not say: it leaves
+// only where the field is a pointer, and with times written as parseTime
+// reads them. Decoding alone would not say: it leaves
 // a field that is missing or null at its zero value, which a receiver could
 // not tell from a value Cimento sent.
 func fits(data json.RawMessage, payload reflect.Type) bool {
@@ -90,6 +130,14 @@ func fits(data json.RawMessage, payload reflect.Type) bool {
 		switch {
 		case isNull:
 			if field.Type.Kind() != reflect.Pointer {
+				return false
+			}
+		case field.Type == timeType || field.Type == reflect.PointerTo(timeType):
+			var text string
+			if json.Unmarshal(value, &text) != nil {
+				return false
+			}
+			if _, isTime := parseTime(text); !isTime {
 				return false
 			}
 		case field.Type.Kind() == reflect.Struct && field.Type != timeType:
