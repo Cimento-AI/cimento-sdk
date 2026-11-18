@@ -95,6 +95,9 @@ jobs:
       - name: Test
         run: go test -race -shuffle=on -count=1 ./...
 
+      - name: Test the release scripts
+        run: ../.github/scripts/test.sh
+
       # The generated event types are committed. This fails when they are not
       # what the generator writes from the committed schema and fixtures.
       - name: Verify generated files are current
