@@ -24,6 +24,9 @@ var (
 	// ErrInvalidSignature is a request none of whose signatures was made
 	// with a secret the Verifier holds, over the body it was given.
 	ErrInvalidSignature = errors.New("webhooks: no signature matches")
+	// ErrMethodNotAllowed is a request to a Handler that is not a POST.
+	// Verify never returns it.
+	ErrMethodNotAllowed = errors.New("webhooks: a webhook is a POST request")
 	// ErrInvalidEvent is a body that is not an event: not a JSON object
 	// with an id, a type, a time and a data object.
 	ErrInvalidEvent = errors.New("webhooks: body is not an event")

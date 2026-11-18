@@ -12,6 +12,14 @@ var sentinels = []error{
 	ErrTimestampTooNew, ErrInvalidSignature, ErrInvalidEvent,
 }
 
+func TestVerifyNeverGivesTheHandlersOwnError(t *testing.T) {
+	t.Parallel()
+
+	if isSentinel(ErrMethodNotAllowed) {
+		t.Error("ErrMethodNotAllowed is listed as an error Verify returns")
+	}
+}
+
 func isSentinel(err error) bool {
 	for _, sentinel := range sentinels {
 		if errors.Is(err, sentinel) {
