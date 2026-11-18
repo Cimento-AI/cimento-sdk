@@ -77,9 +77,12 @@ type rawSchema struct {
 }
 
 func readModel(schema []byte) (model, error) {
+	if !json.Valid(schema) {
+		return model{}, errors.New("the schema is not JSON")
+	}
 	var raw rawSchema
-	if err := json.Unmarshal(schema, &raw); err != nil {
-		return model{}, fmt.Errorf("read schema: %w", err)
+	if err := decode(schema, &raw); err != nil {
+		return model{}, err
 	}
 	if len(raw.Events) == 0 {
 		return model{}, fmt.Errorf("%w: no events under oneOf", ErrUnsupported)
@@ -91,17 +94,17 @@ func readModel(schema []byte) (model, error) {
 		if err := only(node, "title", "description", "x-source", "type", "required", "properties"); err != nil {
 			return model{}, fmt.Errorf("an event: %w", err)
 		}
-		if err := json.Unmarshal(node, &described); err != nil {
+		if err := decode(node, &described); err != nil {
 			return model{}, fmt.Errorf("an event: %w", err)
 		}
 		if err := envelopeOf(described); err != nil {
 			return model{}, fmt.Errorf("%s: %w", described.Title, err)
 		}
 		var data, eventType rawProperty
-		if err := json.Unmarshal(described.Properties["data"], &data); err != nil {
+		if err := decode(described.Properties["data"], &data); err != nil {
 			return model{}, fmt.Errorf("%s: data: %w", described.Title, err)
 		}
-		if err := json.Unmarshal(described.Properties["type"], &eventType); err != nil {
+		if err := decode(described.Properties["type"], &eventType); err != nil {
 			return model{}, fmt.Errorf("%s: type: %w", described.Title, err)
 		}
 		name, isRef := strings.CutPrefix(data.Ref, defsPrefix)
@@ -160,8 +163,8 @@ func (r *modelReader) payload(name string) error {
 	if err := only(definition, "type", "required", "properties"); err != nil {
 		return fmt.Errorf("%s: %w", name, err)
 	}
-	if err := json.Unmarshal(definition, &object); err != nil {
-		return fmt.Errorf("%w: %s: %v", ErrUnsupported, name, err)
+	if err := decode(definition, &object); err != nil {
+		return fmt.Errorf("%s: %w", name, err)
 	}
 	if object.Type != "object" {
 		return fmt.Errorf("%w: %s is not an object", ErrUnsupported, name)
@@ -195,8 +198,8 @@ func (r *modelReader) field(key string, described json.RawMessage) (field, error
 	}
 	var keywords map[string]json.RawMessage
 	var property rawProperty
-	if json.Unmarshal(described, &keywords) != nil || json.Unmarshal(described, &property) != nil {
-		return field{}, fmt.Errorf("%w: %s", ErrUnsupported, described)
+	if err := errors.Join(decode(described, &keywords), decode(described, &property)); err != nil {
+		return field{}, err
 	}
 	if items, listed := keywords["items"]; listed {
 		if err := only(items, "type", "x-known-values"); err != nil {
@@ -236,6 +239,17 @@ func (r *modelReader) field(key string, described json.RawMessage) (field, error
 		return field{}, fmt.Errorf("%w: known values on a field that is not text", ErrUnsupported)
 	}
 	return read, nil
+}
+
+// decode reads part of the schema into the shape the generator expects of it.
+// The schema is known to be JSON by now, so a part that does not fit is one
+// the generator has no mapping for: a type that is a list where a name was
+// expected, say.
+func decode(node json.RawMessage, into any) error {
+	if err := json.Unmarshal(node, into); err != nil {
+		return fmt.Errorf("%w: %v", ErrUnsupported, err)
+	}
+	return nil
 }
 
 // only refuses a schema node with a keyword beyond those allowed. Every node

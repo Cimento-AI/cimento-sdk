@@ -133,6 +133,10 @@ func TestTheGeneratorWritesEveryKindOfField(t *testing.T) {
 func TestTheGeneratorRefusesWhatItCannotType(t *testing.T) {
 	t.Parallel()
 
+	valid := schemaWith(`"id"`, `"id": {"type": "string"}`)
+	if _, err := readModel(valid); err != nil {
+		t.Fatal(err)
+	}
 	for name, schema := range map[string][]byte{
 		"a number":                        schemaWith(`"score"`, `"score": {"type": "number"}`),
 		"a format it does not know":       schemaWith(`"at"`, `"at": {"type": "string", "format": "date"}`),
@@ -156,10 +160,27 @@ func TestTheGeneratorRefusesWhatItCannotType(t *testing.T) {
 		"an event with another id":        withEvent(`"data": {"$ref": "#/$defs/TestPayload"}`, `"id": {"type": "string"}`),
 		"an event with a fifth field":     withEvent(`"data": {"$ref": "#/$defs/TestPayload"}, "version": {"type": "integer"}`, ``),
 		"an event that is one of several": withEvent(`"data": {"$ref": "#/$defs/TestPayload"}`, ``, `"anyOf": []`),
+		"an event that may be null":       []byte(strings.Replace(string(valid), `"type": "object", "required": ["id", "type"`, `"type": ["object", "null"], "required": ["id", "type"`, 1)),
+		"an event whose title is a list":  []byte(strings.Replace(string(valid), `"title": "test.event"`, `"title": ["test.event"]`, 1)),
+		"an event type that is a number":  []byte(strings.Replace(string(valid), `"type": {"const": "test.event"}`, `"type": {"const": 7}`, 1)),
+		"a data $ref that is a list":      withEvent(`"data": {"$ref": ["#/$defs/TestPayload"]}`, ``),
+		"required that is not a list":     withPayload(`"type": "object", "required": "id", "properties": {"id": {"type": "string"}}`),
+		"a format that is not text":       schemaWith(`"id"`, `"id": {"type": "string", "format": 4}`),
+		"known values that are numbers":   schemaWith(`"kind"`, `"kind": {"type": "string", "x-known-values": [1, 2]}`),
+		"events that are not a list":      []byte(`{"oneOf": {}, "$defs": {}}`),
+		"defs that are a list":            []byte(`{"oneOf": [], "$defs": []}`),
 	} {
 		if _, err := readModel(schema); !errors.Is(err, ErrUnsupported) {
 			t.Errorf("%s: %v", name, err)
 		}
+	}
+}
+
+func TestASchemaThatIsNotJSONIsNotCalledUnsupported(t *testing.T) {
+	t.Parallel()
+
+	if _, err := readModel([]byte(`{"oneOf": [`)); err == nil || errors.Is(err, ErrUnsupported) {
+		t.Errorf("a truncated file: %v", err)
 	}
 }
 
