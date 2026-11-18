@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -63,6 +64,7 @@ type rawProperty struct {
 }
 
 type rawObject struct {
+	Type        string                     `json:"type"`
 	Title       string                     `json:"title"`
 	Description string                     `json:"description"`
 	Required    []string                   `json:"required"`
@@ -70,7 +72,7 @@ type rawObject struct {
 }
 
 type rawSchema struct {
-	Events []rawObject                `json:"oneOf"`
+	Events []json.RawMessage          `json:"oneOf"`
 	Defs   map[string]json.RawMessage `json:"$defs"`
 }
 
@@ -84,7 +86,17 @@ func readModel(schema []byte) (model, error) {
 	}
 
 	reader := modelReader{defs: raw.Defs, seen: map[string]bool{}}
-	for _, described := range raw.Events {
+	for _, node := range raw.Events {
+		var described rawObject
+		if err := only(node, "title", "description", "x-source", "type", "required", "properties"); err != nil {
+			return model{}, fmt.Errorf("an event: %w", err)
+		}
+		if err := json.Unmarshal(node, &described); err != nil {
+			return model{}, fmt.Errorf("an event: %w", err)
+		}
+		if err := envelopeOf(described); err != nil {
+			return model{}, fmt.Errorf("%s: %w", described.Title, err)
+		}
 		var data, eventType rawProperty
 		if err := json.Unmarshal(described.Properties["data"], &data); err != nil {
 			return model{}, fmt.Errorf("%s: data: %w", described.Title, err)
@@ -104,6 +116,31 @@ func readModel(schema []byte) (model, error) {
 	return reader.model, nil
 }
 
+// envelopeOf checks that an event is the envelope the SDKs read by hand: an
+// object of an id, a type, a time and data, and nothing else.
+func envelopeOf(described rawObject) error {
+	want := map[string]string{
+		"id":         `{"type":"string","format":"uuid"}`,
+		"occurredAt": `{"type":"string","format":"date-time"}`,
+	}
+	if described.Type != "object" || !slices.Equal(described.Required, []string{"id", "type", "occurredAt", "data"}) || len(described.Properties) != 4 {
+		return fmt.Errorf("%w: the envelope is not id, type, occurredAt and data", ErrUnsupported)
+	}
+	for key, shape := range want {
+		var got, expected any
+		if json.Unmarshal(described.Properties[key], &got) != nil || json.Unmarshal([]byte(shape), &expected) != nil || !reflect.DeepEqual(got, expected) {
+			return fmt.Errorf("%w: the envelope's %s is not %s", ErrUnsupported, key, shape)
+		}
+	}
+	if err := only(described.Properties["type"], "const"); err != nil {
+		return fmt.Errorf("type: %w", err)
+	}
+	if err := only(described.Properties["data"], "$ref"); err != nil {
+		return fmt.Errorf("data: %w", err)
+	}
+	return nil
+}
+
 type modelReader struct {
 	defs  map[string]json.RawMessage
 	seen  map[string]bool
@@ -120,8 +157,14 @@ func (r *modelReader) payload(name string) error {
 		return fmt.Errorf("%w: $ref to %s, which $defs does not have", ErrUnsupported, name)
 	}
 	var object rawObject
-	if err := json.Unmarshal(definition, &object); err != nil {
+	if err := only(definition, "type", "required", "properties"); err != nil {
 		return fmt.Errorf("%s: %w", name, err)
+	}
+	if err := json.Unmarshal(definition, &object); err != nil {
+		return fmt.Errorf("%w: %s: %v", ErrUnsupported, name, err)
+	}
+	if object.Type != "object" {
+		return fmt.Errorf("%w: %s is not an object", ErrUnsupported, name)
 	}
 	if len(object.Required) != len(object.Properties) {
 		return fmt.Errorf("%w: %s has a property that is not required, or the reverse", ErrUnsupported, name)
@@ -147,18 +190,18 @@ func (r *modelReader) payload(name string) error {
 }
 
 func (r *modelReader) field(key string, described json.RawMessage) (field, error) {
+	if err := only(described, "type", "format", "$ref", "items", "x-known-values"); err != nil {
+		return field{}, err
+	}
 	var keywords map[string]json.RawMessage
-	if err := json.Unmarshal(described, &keywords); err != nil {
-		return field{}, err
-	}
-	for keyword := range keywords {
-		if !slices.Contains([]string{"type", "format", "$ref", "items", "x-known-values"}, keyword) {
-			return field{}, fmt.Errorf("%w: keyword %q", ErrUnsupported, keyword)
-		}
-	}
 	var property rawProperty
-	if err := json.Unmarshal(described, &property); err != nil {
-		return field{}, err
+	if json.Unmarshal(described, &keywords) != nil || json.Unmarshal(described, &property) != nil {
+		return field{}, fmt.Errorf("%w: %s", ErrUnsupported, described)
+	}
+	if items, listed := keywords["items"]; listed {
+		if err := only(items, "type", "x-known-values"); err != nil {
+			return field{}, fmt.Errorf("items: %w", err)
+		}
 	}
 
 	read := field{Key: key, Known: property.Known}
@@ -193,6 +236,22 @@ func (r *modelReader) field(key string, described json.RawMessage) (field, error
 		return field{}, fmt.Errorf("%w: known values on a field that is not text", ErrUnsupported)
 	}
 	return read, nil
+}
+
+// only refuses a schema node with a keyword beyond those allowed. Every node
+// the generator reads goes through it, so a constraint it would not carry
+// into the types, such as an enum, stops it.
+func only(node json.RawMessage, allowed ...string) error {
+	var keywords map[string]json.RawMessage
+	if err := json.Unmarshal(node, &keywords); err != nil || keywords == nil {
+		return fmt.Errorf("%w: %s is not a schema object", ErrUnsupported, node)
+	}
+	for keyword := range keywords {
+		if !slices.Contains(allowed, keyword) {
+			return fmt.Errorf("%w: keyword %q", ErrUnsupported, keyword)
+		}
+	}
+	return nil
 }
 
 // typeOf reads "type", which is a name or a name and "null".
