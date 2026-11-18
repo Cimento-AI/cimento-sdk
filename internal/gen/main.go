@@ -18,6 +18,7 @@ const (
 	fixturesGlob = "fixtures/webhooks/events/valid/*.json"
 	goFile       = "go/webhooks/events_gen.go"
 	tsFile       = "typescript/webhooks/src/events.gen.ts"
+	tsShapesFile = "typescript/webhooks/src/shapes.gen.ts"
 	tsTestFile   = "typescript/webhooks/test/fixtures.gen.test.ts"
 )
 
@@ -60,7 +61,7 @@ func generate(root string) error {
 	if err != nil {
 		return err
 	}
-	for file, content := range map[string][]byte{goFile: goTypes, tsFile: tsTypes, tsTestFile: tsTest} {
+	for file, content := range map[string][]byte{goFile: goTypes, tsFile: tsTypes, tsShapesFile: tsShapes(schema), tsTestFile: tsTest} {
 		path := filepath.Join(root, file)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err
