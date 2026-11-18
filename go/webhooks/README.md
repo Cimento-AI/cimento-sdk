@@ -105,4 +105,19 @@ wh, err := webhooks.NewWebhook(newSecret, webhooks.WithAdditionalSecrets(oldSecr
 
 ## Testing your handler
 
+Sign a body with a secret of your own and send it to your handler, as Cimento would:
+
+```go
+wh, err := webhooks.NewWebhook("whsec_dGVzdGluZy1vbmx5LW5vdC1hLXJlYWwtc2VjcmV0")
+// ...
+signature, err := wh.Sign(id, now, body)
+
+request := httptest.NewRequest(http.MethodPost, "/webhooks/cimento", bytes.NewReader(body))
+request.Header.Set("webhook-id", id)
+request.Header.Set("webhook-timestamp", strconv.FormatInt(now.Unix(), 10))
+request.Header.Set("webhook-signature", signature)
+```
+
+`Sign` has the signature of the Standard Webhooks library's method of the same name, and signs with the first secret.
+
 `webhooks.Parse` reads a body as an event without verifying it, for tests. `WithClock` and `WithTolerance` set the clock and the tolerance a `Webhook` uses.

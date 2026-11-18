@@ -1,13 +1,17 @@
 package webhooks_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/cimento-ai/cimento-sdk/go/webhooks"
 )
@@ -82,6 +86,38 @@ func ExampleWithAdditionalSecrets() {
 		log.Fatal(err)
 	}
 	_ = wh
+}
+
+// To test a receiver, sign a body with a secret of your own and send it to
+// the handler, as Cimento would.
+func ExampleWebhook_Sign() {
+	wh, err := webhooks.NewWebhook("whsec_dGVzdGluZy1vbmx5LW5vdC1hLXJlYWwtc2VjcmV0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	handler := webhooks.Handler(wh, func(ctx context.Context, event *webhooks.Event) error {
+		fmt.Println("handled", event.Type)
+		return nil
+	})
+
+	id, now := "c7a1e2b3-4d5f-4a6b-8c9d-0e1f2a3b4c5d", time.Now()
+	body := []byte(`{"id":"` + id + `","type":"webhook.test","occurredAt":"2026-11-12T16:50:00.124Z",` +
+		`"data":{"endpointId":"3b9d5c2e-7f1a-4e8b-a6c4-9d0e1f2a3b4c"}}`)
+	signature, err := wh.Sign(id, now, body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	request := httptest.NewRequest(http.MethodPost, "/webhooks/cimento", bytes.NewReader(body))
+	request.Header.Set("webhook-id", id)
+	request.Header.Set("webhook-timestamp", strconv.FormatInt(now.Unix(), 10))
+	request.Header.Set("webhook-signature", signature)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	fmt.Println(response.Code)
+	// Output:
+	// handled webhook.test
+	// 204
 }
 
 func ExampleParse() {

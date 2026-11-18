@@ -119,10 +119,7 @@ func (wh *Webhook) VerifySignature(body []byte, header http.Header) error {
 
 	expected := make([][]byte, 0, len(wh.keys))
 	for _, key := range wh.keys {
-		mac := hmac.New(sha256.New, key)
-		mac.Write([]byte(id + "." + timestamp + "."))
-		mac.Write(body)
-		expected = append(expected, mac.Sum(nil))
+		expected = append(expected, signatureOf(key, id, timestamp, body))
 	}
 	// A header holds one signature for each secret Cimento signed with, and
 	// may hold signatures of versions this package does not know.
@@ -143,4 +140,23 @@ func (wh *Webhook) VerifySignature(body []byte, header http.Header) error {
 		return ErrInvalidSignature
 	}
 	return nil
+}
+
+// Sign returns the signature Cimento would send in the webhook-signature
+// header for a request with this id, this time in webhook-timestamp and this
+// body: "v1," followed by base64. It signs with the Webhook's first secret.
+//
+// It is for testing a receiver: sign a body with a secret of your own and
+// send it to your handler. The error is always nil; Sign has the signature
+// of the Standard Webhooks library's method of the same name.
+func (wh *Webhook) Sign(id string, timestamp time.Time, body []byte) (string, error) {
+	signature := signatureOf(wh.keys[0], id, strconv.FormatInt(timestamp.Unix(), 10), body)
+	return signatureVersion + "," + base64.StdEncoding.EncodeToString(signature), nil
+}
+
+func signatureOf(key []byte, id string, timestamp string, body []byte) []byte {
+	mac := hmac.New(sha256.New, key)
+	mac.Write([]byte(id + "." + timestamp + "."))
+	mac.Write(body)
+	return mac.Sum(nil)
 }

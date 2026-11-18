@@ -3,6 +3,8 @@ package webhooks
 import (
 	"errors"
 	"net/http"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -165,5 +167,76 @@ func TestTheDefaultsAreFiveMinutesAndTheMachinesClock(t *testing.T) {
 	}
 	if err := negative.VerifySignature([]byte(delivery.Body), headerOf(delivery)); !errors.Is(err, ErrTimestampTooOld) {
 		t.Errorf("a negative tolerance: got %v", err)
+	}
+}
+
+func TestSignGivesTheSignatureOfEveryFixtureThatVerifies(t *testing.T) {
+	t.Parallel()
+
+	signed := 0
+	for _, c := range signatureCases(t) {
+		if c.Expect != "ok" {
+			continue
+		}
+		sentAt, err := strconv.ParseInt(headerOf(c).Get(headerTimestamp), 10, 64)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sent := strings.Fields(headerOf(c).Get(headerSignature))
+		matched := false
+		for _, secret := range c.Secrets {
+			wh, err := NewWebhook(secret)
+			if err != nil {
+				t.Fatal(err)
+			}
+			signature, err := wh.Sign(headerOf(c).Get(headerID), time.Unix(sentAt, 0), []byte(c.Body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			matched = matched || slices.Contains(sent, signature)
+		}
+		if !matched {
+			t.Errorf("%s: no secret signs it as the header has it", c.Name)
+		}
+		signed++
+	}
+	if signed == 0 {
+		t.Fatal("no fixture verifies")
+	}
+}
+
+func TestWhatSignReturnsVerifies(t *testing.T) {
+	t.Parallel()
+
+	c := signatureCases(t)[1]
+	now := time.Date(2027, 1, 2, 3, 4, 5, 999, time.UTC)
+	signer, err := NewWebhook(c.Secrets[0], WithAdditionalSecrets("whsec_"+strings.Repeat("QUJD", 8)), WithClock(func() time.Time { return now }))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := []byte(`{"id":"evt","type":"webhook.test","occurredAt":"2027-01-02T03:04:05Z","data":{"endpointId":"e"}}`)
+	signature, err := signer.Sign("evt", now, body)
+	if err != nil || !strings.HasPrefix(signature, "v1,") || strings.Contains(signature, " ") {
+		t.Fatalf("got %q, %v", signature, err)
+	}
+
+	header := http.Header{}
+	header.Set(headerID, "evt")
+	header.Set(headerTimestamp, strconv.FormatInt(now.Unix(), 10))
+	header.Set(headerSignature, signature)
+	receiver, err := NewWebhook(c.Secrets[0], WithClock(func() time.Time { return now }))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if event, err := receiver.Verify(body, header); err != nil || event.Type != EventTypeWebhookTest {
+		t.Errorf("got %+v, %v", event, err)
+	}
+
+	other, err := NewWebhook("whsec_" + strings.Repeat("QUJD", 8))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again, _ := other.Sign("evt", now, body); again == signature {
+		t.Error("another secret gives the same signature")
 	}
 }
