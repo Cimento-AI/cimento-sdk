@@ -44,6 +44,22 @@ Repository tooling, in a Go module of its own. It may have dependencies. The SDK
 - No runtime dependencies. Use Web Crypto, not `node:crypto`, so the package runs outside Node.
 - pnpm. `pnpm lint` in `typescript/` checks eslint and prettier; `pnpm -r lint` typechecks, builds and checks each package as it would be published.
 
+## Commits
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), with the ticket as a `Refs` footer:
+
+```
+feat(webhooks): verify the signature of a delivery
+
+Why the change was made, when the subject does not say it.
+
+Refs: CIM-1234
+```
+
+- Types: `feat`, `fix`, `docs`, `test`, `refactor`, `build`, `ci`, `chore`. The scope is optional; use the SDK's name (`webhooks`) or the part of the repository (`gen`, `fixtures`).
+- A change that breaks an SDK's users has `!` after the type or scope and a `BREAKING CHANGE:` footer.
+- A pull request's title is written the same way, since it becomes the commit when the pull request is squashed.
+
 ## Checks
 
 `make lint` and `make test` from the root run what CI runs.
