@@ -1,0 +1,9 @@
+{
+  "id": "f1a0bfce-d3e2-44f5-96a7-7c8d9e0f1a2b",
+  "type": "agent_hub.settings.updated",
+  "occurredAt": "2026-11-12T11:00:00.000Z",
+  "data": {
+    "changedKeys": ["telemetry.mask", null],
+    "actorId": null
+  }
+}

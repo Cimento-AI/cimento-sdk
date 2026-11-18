@@ -1,0 +1,15 @@
+{
+  "id": "e09faebd-c2d1-43e4-85f6-6b7c8d9e0f1a",
+  "type": "training.assignment.completed",
+  "occurredAt": "2026-11-12T15:02:11.902Z",
+  "data": {
+    "assignmentId": "8f3b2a1c-6d5e-4f70-9a8b-7c6d5e4f3a2b",
+    "campaignId": "2e1d0c9b-8a7f-4e6d-b5c4-a3b2c1d0e9f8",
+    "user": {
+      "id": null,
+      "email": "ada.lovelace@example.com"
+    },
+    "completedAt": "2026-11-12T15:02:11.871Z",
+    "completedBy": "learner"
+  }
+}

@@ -19,16 +19,16 @@ var outcomes = map[string]error{
 	"malformed_secret":  ErrMalformedSecret,
 }
 
-// verifierFor is the Verifier a fixture describes, at the time it describes.
-func verifierFor(c signatureCase) (*Verifier, error) {
+// webhookFor is the Webhook a fixture describes, at the time it describes.
+func webhookFor(c signatureCase) (*Webhook, error) {
 	options := []Option{WithClock(func() time.Time { return time.Unix(c.Now, 0) })}
 	if c.ToleranceSeconds != nil {
 		options = append(options, WithTolerance(time.Duration(*c.ToleranceSeconds)*time.Second))
 	}
 	if len(c.Secrets) == 0 {
-		return NewVerifier("", options...)
+		return NewWebhook("", options...)
 	}
-	return NewVerifier(c.Secrets[0], append(options, WithAdditionalSecrets(c.Secrets[1:]...))...)
+	return NewWebhook(c.Secrets[0], append(options, WithAdditionalSecrets(c.Secrets[1:]...))...)
 }
 
 func headerOf(c signatureCase) http.Header {
@@ -50,9 +50,9 @@ func TestVerifySignatureGivesWhatEveryFixtureExpects(t *testing.T) {
 		}
 		seen[c.Expect] = true
 
-		verifier, err := verifierFor(c)
+		wh, err := webhookFor(c)
 		if err == nil {
-			err = verifier.VerifySignature([]byte(c.Body), headerOf(c))
+			err = wh.VerifySignature([]byte(c.Body), headerOf(c))
 		}
 		if want == nil && err != nil {
 			t.Errorf("%s: %v", c.Name, err)
@@ -91,11 +91,11 @@ func TestVerifyReadsTheEventOfADeliveryItTrusts(t *testing.T) {
 		if c.Expect != "ok" || !strings.Contains(c.Name, "delivery") {
 			continue
 		}
-		verifier, err := verifierFor(c)
+		wh, err := webhookFor(c)
 		if err != nil {
 			t.Fatal(err)
 		}
-		event, err := verifier.Verify([]byte(c.Body), headerOf(c))
+		event, err := wh.Verify([]byte(c.Body), headerOf(c))
 		if err != nil {
 			t.Errorf("%s: %v", c.Name, err)
 			continue
@@ -117,11 +117,11 @@ func TestVerifyDoesNotReadABodyItDoesNotTrust(t *testing.T) {
 		if c.Expect == "ok" || c.Expect == "malformed_secret" {
 			continue
 		}
-		verifier, err := verifierFor(c)
+		wh, err := webhookFor(c)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if event, err := verifier.Verify([]byte(c.Body), headerOf(c)); event != nil || !errors.Is(err, outcomes[c.Expect]) {
+		if event, err := wh.Verify([]byte(c.Body), headerOf(c)); event != nil || !errors.Is(err, outcomes[c.Expect]) {
 			t.Errorf("%s: got %+v, %v", c.Name, event, err)
 		}
 	}
@@ -131,14 +131,14 @@ func TestVerifyRefusesATrustedBodyThatIsNotAnEvent(t *testing.T) {
 	t.Parallel()
 
 	reference := signatureCases(t)[0]
-	verifier, err := verifierFor(reference)
+	wh, err := webhookFor(reference)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := verifier.VerifySignature([]byte(reference.Body), headerOf(reference)); err != nil {
+	if err := wh.VerifySignature([]byte(reference.Body), headerOf(reference)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verifier.Verify([]byte(reference.Body), headerOf(reference)); !errors.Is(err, ErrInvalidEvent) {
+	if _, err := wh.Verify([]byte(reference.Body), headerOf(reference)); !errors.Is(err, ErrInvalidEvent) {
 		t.Errorf("got %v", err)
 	}
 }
@@ -147,19 +147,19 @@ func TestTheDefaultsAreFiveMinutesAndTheMachinesClock(t *testing.T) {
 	t.Parallel()
 
 	delivery := signatureCases(t)[1]
-	verifier, err := NewVerifier(delivery.Secrets[0])
+	wh, err := NewWebhook(delivery.Secrets[0])
 	if err != nil {
 		t.Fatal(err)
 	}
-	if verifier.tolerance != 300 {
-		t.Errorf("the tolerance is %d seconds", verifier.tolerance)
+	if wh.tolerance != 300 {
+		t.Errorf("the tolerance is %d seconds", wh.tolerance)
 	}
 	// The fixture was signed long before this test runs.
-	if err := verifier.VerifySignature([]byte(delivery.Body), headerOf(delivery)); !errors.Is(err, ErrTimestampTooOld) {
+	if err := wh.VerifySignature([]byte(delivery.Body), headerOf(delivery)); !errors.Is(err, ErrTimestampTooOld) {
 		t.Errorf("got %v", err)
 	}
 
-	negative, err := NewVerifier(delivery.Secrets[0], WithTolerance(-time.Hour), WithClock(func() time.Time { return time.Unix(delivery.Now, 0) }))
+	negative, err := NewWebhook(delivery.Secrets[0], WithTolerance(-time.Hour), WithClock(func() time.Time { return time.Unix(delivery.Now, 0) }))
 	if err != nil {
 		t.Fatal(err)
 	}

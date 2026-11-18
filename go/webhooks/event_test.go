@@ -83,6 +83,12 @@ func TestParseAcceptsWhatItDoesNotKnow(t *testing.T) {
 		if event.ID == "" || event.Type == "" || event.OccurredAt.IsZero() || len(event.RawData) == 0 {
 			t.Errorf("%s: read as %+v", name, event)
 		}
+		// The fixtures' rule: data is handed over as its type unless the
+		// type is unknown or the file is one whose data does not fit.
+		_, known := newPayload(event.Type)
+		if typed := known && !strings.HasPrefix(name, "known-type-"); typed != (event.Data != nil) {
+			t.Errorf("%s: data is %T", name, event.Data)
+		}
 	}
 
 	parse := func(name string) *Event {
@@ -105,9 +111,14 @@ func TestParseAcceptsWhatItDoesNotKnow(t *testing.T) {
 	if misshapen.Type != EventTypePhishingRoundStarted || misshapen.Data != nil || !strings.Contains(string(misshapen.RawData), "about two hundred") {
 		t.Errorf("a known type that does not fit: %+v", misshapen)
 	}
-	lacking, ok := parse("known-type-missing-field").Data.(*TrainingCampaignPayload)
-	if !ok || lacking.Name != "Security awareness 2027" || lacking.CourseID != nil || lacking.ActorID != nil {
-		t.Errorf("a known type with fields missing: %+v", lacking)
+	for name, eventType := range map[string]string{
+		"known-type-missing-field": EventTypeTrainingCampaignLaunched,
+		"known-type-null-field":    EventTypeTrainingAssignmentCompleted,
+		"known-type-null-item":     EventTypeAgentHubSettingsUpdated,
+	} {
+		if unfit := parse(name); unfit.Type != eventType || unfit.Data != nil || len(unfit.RawData) == 0 {
+			t.Errorf("%s: %+v", name, unfit)
+		}
 	}
 	extra, ok := parse("unknown-fields").Data.(*TrainingAssignmentCompletedPayload)
 	if !ok || extra.CompletedBy != TrainingAssignmentCompletedPayloadCompletedByLearner || extra.User.Email == nil {

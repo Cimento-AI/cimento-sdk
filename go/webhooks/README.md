@@ -13,10 +13,10 @@ It needs Go 1.26 or newer and has no dependencies.
 
 ## Receive webhooks
 
-Make a `Verifier` from your endpoint's signing secret, the `whsec_...` value Cimento shows once when you create the endpoint, and mount `Handler`:
+Make a `Webhook` from your endpoint's signing secret, the `whsec_...` value Cimento shows once when you create the endpoint, and mount `Handler`:
 
 ```go
-verifier, err := webhooks.NewVerifier(os.Getenv("CIMENTO_WEBHOOK_SECRET"))
+wh, err := webhooks.NewWebhook(os.Getenv("CIMENTO_WEBHOOK_SECRET"))
 if err != nil {
 	log.Fatal(err)
 }
@@ -37,7 +37,7 @@ handle := func(ctx context.Context, event *webhooks.Event) error {
 	return nil
 }
 
-http.Handle("/webhooks/cimento", webhooks.Handler(verifier, handle,
+http.Handle("/webhooks/cimento", webhooks.Handler(wh, handle,
 	webhooks.OnReject(func(r *http.Request, err error) {
 		log.Printf("refused a webhook from %s: %v", r.RemoteAddr, err)
 	}),
@@ -62,7 +62,9 @@ Cimento waits 10 seconds for the answer and may deliver an event more than once.
 
 `event.Data` is a pointer to the payload struct of the event's type, and the `EventType...` constants name every type. Fields that can be null are pointers.
 
-Cimento adds event types and fields over time. An event of a type this version does not know is still verified and handed to you: `event.Data` is nil and `event.RawData` has its data as JSON. A field this version does not know is ignored. Text fields with a set of values today, such as `CompletedBy`, are plain strings with constants for the known values, because more may be added.
+Cimento adds event types and fields over time. An event of a type this version does not know is still verified and handed to you: `event.Data` is nil and `event.RawData` has its data as JSON. A field this version does not know is ignored.
+
+When `event.Data` is not nil, every field of the struct was in the event: none was missing, and none was null unless it is a pointer. Data that does not fit its type that way is handed to you like an unknown type, with `event.Data` nil. Text fields with a set of values today, such as `CompletedBy`, are plain strings with constants for the known values, because more may be added.
 
 ## Verify a request yourself
 
@@ -74,7 +76,7 @@ if err != nil {
 	http.Error(w, "", http.StatusBadRequest)
 	return
 }
-event, err := verifier.Verify(body, r.Header)
+event, err := wh.Verify(body, r.Header)
 ```
 
 The signature is over the bytes Cimento sent. A body that was parsed and written out again will not verify.
@@ -91,16 +93,16 @@ The signature is over the bytes Cimento sent. A body that was parsed and written
 
 `OnReject` can also be given `ErrMethodNotAllowed`, for a request that is not a POST, and the error from reading a body that is too large.
 
-`NewVerifier` returns `ErrMalformedSecret` for a secret that is not `whsec_` followed by base64.
+`NewWebhook` returns `ErrMalformedSecret` for a secret that is not `whsec_` followed by base64.
 
 ## Rotating a secret
 
-After you rotate an endpoint's secret, Cimento signs with the old and the new one for 24 hours. Give the verifier both while your deployment moves over:
+After you rotate an endpoint's secret, Cimento signs with the old and the new one for 24 hours. Give it both while your deployment moves over:
 
 ```go
-verifier, err := webhooks.NewVerifier(newSecret, webhooks.WithAdditionalSecrets(oldSecret))
+wh, err := webhooks.NewWebhook(newSecret, webhooks.WithAdditionalSecrets(oldSecret))
 ```
 
 ## Testing your handler
 
-`webhooks.Parse` reads a body as an event without verifying it, for tests. `WithClock` and `WithTolerance` set the clock and the tolerance a `Verifier` uses.
+`webhooks.Parse` reads a body as an event without verifying it, for tests. `WithClock` and `WithTolerance` set the clock and the tolerance a `Webhook` uses.

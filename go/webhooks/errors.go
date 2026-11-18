@@ -22,7 +22,7 @@ var (
 	// machine's clock than the tolerance.
 	ErrTimestampTooNew = errors.New("webhooks: webhook-timestamp is too far in the future")
 	// ErrInvalidSignature is a request none of whose signatures was made
-	// with a secret the Verifier holds, over the body it was given.
+	// with a secret the Webhook holds, over the body it was given.
 	ErrInvalidSignature = errors.New("webhooks: no signature matches")
 	// ErrMethodNotAllowed is a request to a Handler that is not a POST.
 	// Verify never returns it.
