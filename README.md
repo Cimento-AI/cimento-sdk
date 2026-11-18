@@ -3,7 +3,7 @@
 SDKs for [Cimento](https://cimento.ai).
 
 > [!NOTE]
-> Nothing here is released yet. The Go module works and is not tagged; the TypeScript package has only the event types so far.
+> Nothing here is released yet. Both SDKs work; the Go module is not tagged and the TypeScript package is not published.
 
 | Package                                         | Language   | Path                                         | What it is for                                                                             |
 | ----------------------------------------------- | ---------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |

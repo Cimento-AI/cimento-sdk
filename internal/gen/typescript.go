@@ -59,9 +59,51 @@ func tsSource(schema model) ([]byte, error) {
 	}
 	out.WriteString("] as const satisfies readonly EventType[];\n\n")
 
-	out.WriteString("/** An event of a type this package knows. `type` says which `data` it has. */\n")
-	out.WriteString("export type KnownWebhookEvent = {\n  [T in EventType]: {\n    id: string;\n    type: T;\n    occurredAt: string;\n    data: EventPayloads[T];\n  };\n}[EventType];\n")
+	out.WriteString("/**\n * An event of a type this package knows, whose data fits the type. `type` says\n * which `data` it has.\n */\n")
+	out.WriteString("export type KnownWebhookEvent = {\n  [T in EventType]: {\n    known: true;\n    id: string;\n    type: T;\n    occurredAt: string;\n    data: EventPayloads[T];\n  };\n}[EventType];\n\n")
+
 	return []byte(out.String()), nil
+}
+
+// tsShapes is the TypeScript module the package checks data against at run
+// time, where the interfaces no longer exist. It is a file of its own so that
+// the package can keep it out of what it exports.
+func tsShapes(schema model) []byte {
+	var out strings.Builder
+	fmt.Fprintf(&out, "// %s\n\n", generatedLine)
+	out.WriteString("import type { EventType } from \"./events.gen\";\n\n")
+	out.WriteString("/**\n * One field of a payload: its key, its kind and whether it may be null.\n */\n")
+	out.WriteString("export type FieldShape = readonly [\n  key: string,\n  kind: \"string\" | \"time\" | \"integer\" | \"strings\" | { readonly payload: string },\n  nullable: boolean,\n];\n\n")
+	out.WriteString("export const payloadShapes: Readonly<Record<string, readonly FieldShape[]>> = {\n")
+	for _, described := range schema.Payloads {
+		fmt.Fprintf(&out, "  %s: [\n", described.Name)
+		for _, key := range described.Fields {
+			fmt.Fprintf(&out, "    [%q, %s, %t],\n", key.Key, tsShapeKind(key), key.Nullable)
+		}
+		out.WriteString("  ],\n")
+	}
+	out.WriteString("};\n\n")
+	out.WriteString("export const eventPayloads: Readonly<Record<EventType, string>> = {\n")
+	for _, described := range schema.Events {
+		fmt.Fprintf(&out, "  %q: %q,\n", described.Type, described.Payload)
+	}
+	out.WriteString("};\n")
+	return []byte(out.String())
+}
+
+// tsShapeKind is what the package checks a field's value to be at run time.
+func tsShapeKind(described field) string {
+	switch described.Kind {
+	case kindTime:
+		return `"time"`
+	case kindInteger:
+		return `"integer"`
+	case kindTextList:
+		return `"strings"`
+	case kindObject:
+		return fmt.Sprintf("{ payload: %q }", described.Object)
+	}
+	return `"string"`
 }
 
 // tsFixtureTest is a test that holds every valid fixture to the generated

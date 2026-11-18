@@ -15,7 +15,8 @@ Public SDKs for Cimento. Each SDK is its own Go module (`go/<name>`) or npm pack
 
 ## Generated files
 
-- `go/webhooks/events_gen.go`, `typescript/webhooks/src/events.gen.ts` and `typescript/webhooks/test/fixtures.gen.test.ts` are written by `make generate` from the schema and the fixtures. Never edit them.
+- `go/webhooks/events_gen.go` and, under `typescript/webhooks/`, `src/events.gen.ts`, `src/shapes.gen.ts` and `test/fixtures.gen.test.ts` are written by `make generate` from the schema and the fixtures. Never edit them.
+- `shapes.gen.ts` is what the TypeScript package checks data against at run time. It is not exported from the package; keep it that way.
 - To change a type: the schema changes in Cimento's API, then `make sync-schema`, then `make generate`. Commit all of it together.
 - The generator, `internal/gen`, fails on a schema it has no mapping for. Teach it the new construct for both languages; do not work around it in one.
 
@@ -41,7 +42,8 @@ Repository tooling, in a Go module of its own. It may have dependencies. The SDK
 
 ## TypeScript
 
-- No runtime dependencies. Use Web Crypto, not `node:crypto`, so the package runs outside Node.
+- No runtime dependencies. Use Web Crypto, not `node:crypto`, so the package runs outside Node. Tests and scripts may use Node.
+- The README's code lives in `examples/`, where it is compiled and run by a test. Change the example, then the README to match; the test fails if they differ.
 - pnpm. `pnpm lint` in `typescript/` checks eslint and prettier; `pnpm -r lint` typechecks, builds and checks each package as it would be published.
 
 ## Commits

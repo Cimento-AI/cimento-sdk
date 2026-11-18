@@ -261,12 +261,17 @@ export const eventTypes = [
   "webhook.test",
 ] as const satisfies readonly EventType[];
 
-/** An event of a type this package knows. `type` says which `data` it has. */
+/**
+ * An event of a type this package knows, whose data fits the type. `type` says
+ * which `data` it has.
+ */
 export type KnownWebhookEvent = {
   [T in EventType]: {
+    known: true;
     id: string;
     type: T;
     occurredAt: string;
     data: EventPayloads[T];
   };
 }[EventType];
+

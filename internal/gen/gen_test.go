@@ -72,10 +72,10 @@ func withEvent(data string, id string, keywords ...string) []byte {
 	return []byte(schema)
 }
 
-func TestTheGeneratorWritesEveryKindOfField(t *testing.T) {
-	t.Parallel()
-
-	schema, err := readModel(schemaWith(
+// everyKind is a schema whose payload has a field of every kind the
+// generator knows.
+func everyKind() []byte {
+	return schemaWith(
 		`"id", "name", "note", "at", "until", "count", "kind", "tags", "other"`,
 		`"id": {"type": "string", "format": "uuid"},
 		 "name": {"type": "string"},
@@ -86,7 +86,13 @@ func TestTheGeneratorWritesEveryKindOfField(t *testing.T) {
 		 "kind": {"type": ["string", "null"], "x-known-values": ["one", "two_words"]},
 		 "tags": {"type": "array", "items": {"type": "string", "x-known-values": ["a.b"]}},
 		 "other": {"$ref": "#/$defs/Other"}`,
-	))
+	)
+}
+
+func TestTheGeneratorWritesEveryKindOfField(t *testing.T) {
+	t.Parallel()
+
+	schema, err := readModel(everyKind())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,10 +129,47 @@ func TestTheGeneratorWritesEveryKindOfField(t *testing.T) {
 		`  tags: ("a.b" | (string & {}))[];`,
 		"  other: Other;",
 		"  /** A test. */\n  \"test.event\": TestPayload;",
+		"    known: true;\n    id: string;\n    type: T;",
 	} {
 		if !strings.Contains(string(tsTypes), want) {
 			t.Errorf("the TypeScript source lacks %q:\n%s", want, tsTypes)
 		}
+	}
+}
+
+func TestTheGeneratorDescribesEachPayloadForRunTime(t *testing.T) {
+	t.Parallel()
+
+	schema, err := readModel(everyKind())
+	if err != nil {
+		t.Fatal(err)
+	}
+	shapes := string(tsShapes(schema))
+	for _, want := range []string{
+		`  TestPayload: [
+    ["id", "string", false],
+    ["name", "string", false],
+    ["note", "string", true],
+    ["at", "time", false],
+    ["until", "time", true],
+    ["count", "integer", false],
+    ["kind", "string", true],
+    ["tags", "strings", false],
+    ["other", { payload: "Other" }, false],
+  ],`,
+		"  Other: [\n    [\"id\", \"string\", false],\n  ],",
+		"  \"test.event\": \"TestPayload\",\n};",
+	} {
+		if !strings.Contains(shapes, want) {
+			t.Errorf("the shapes lack %q:\n%s", want, shapes)
+		}
+	}
+	types, err := tsSource(schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(types), "payloadShapes") {
+		t.Error("the module the package exports has the shapes in it")
 	}
 }
 
@@ -247,7 +290,7 @@ func TestTheGeneratedFilesAreCurrent(t *testing.T) {
 	if err := generate(root); err != nil {
 		t.Fatal(err)
 	}
-	for _, file := range []string{goFile, tsFile, tsTestFile} {
+	for _, file := range []string{goFile, tsFile, tsShapesFile, tsTestFile} {
 		written, err := os.ReadFile(filepath.Join(root, file))
 		if err != nil {
 			t.Fatal(err)
