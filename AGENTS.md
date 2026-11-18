@@ -13,6 +13,12 @@ Public SDKs for Cimento. Each SDK is its own Go module (`go/<name>`) or npm pack
 - `x-known-values` lists the values a text field takes today. The set is open: an SDK must accept a value that is not listed.
 - An SDK must accept an event type it does not know, and a field it does not know.
 
+## Generated files
+
+- `go/webhooks/events_gen.go`, `typescript/webhooks/src/events.gen.ts` and `typescript/webhooks/test/fixtures.gen.test.ts` are written by `make generate` from the schema and the fixtures. Never edit them.
+- To change a type: the schema changes in Cimento's API, then `make sync-schema`, then `make generate`. Commit all of it together.
+- The generator, `internal/gen`, fails on a schema it has no mapping for. Teach it the new construct for both languages; do not work around it in one.
+
 ## Both SDKs behave the same
 
 A change to how one SDK verifies or parses is a change to both. They are tested against the same shared fixtures, in `fixtures/webhooks`, which has a README.
