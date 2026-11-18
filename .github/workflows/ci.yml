@@ -1,0 +1,102 @@
+name: CI
+
+# Pushes to main, plus every pull request. Also registering push for every
+# branch would run the suite twice for each push to a PR branch.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# A new push to a pull request cancels the run in flight for it. Pushes to main
+# are keyed on the commit, so rapid merges cannot cancel each other's runs.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# This workflow runs on pull requests from forks, so it uses no secrets.
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest Go the module supports, and the newest.
+        go: ["1.26", "stable"]
+    defaults:
+      run:
+        working-directory: go/webhooks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: go/webhooks/go.mod
+
+      - name: Verify go.mod is tidy
+        run: go mod tidy -diff
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.14.0
+          working-directory: go/webhooks
+
+      - name: Forbid init() in non-test Go files
+        run: |
+          if git grep -nE "^func init\(" -- '*.go' ':!*_test.go'; then
+            echo "::error::init() is not allowed in this module"
+            exit 1
+          fi
+
+      - name: Test
+        run: go test -race -shuffle=on -count=1 ./...
+
+  typescript:
+    name: TypeScript (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: typescript/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+          cache-dependency-path: typescript/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint and format
+        run: pnpm lint
+
+      # Typechecks, builds, and checks the package as it would be published.
+      - name: Check packages
+        run: pnpm -r lint
+
+      - name: Test
+        run: pnpm -r test
