@@ -35,14 +35,41 @@ func TestGoNames(t *testing.T) {
 func schemaWith(required string, properties string) []byte {
 	return []byte(`{
 		"oneOf": [{
-			"title": "test.event", "description": "A test.",
-			"properties": {"type": {"const": "test.event"}, "data": {"$ref": "#/$defs/TestPayload"}}
+			"title": "test.event", "description": "A test.", "x-source": "system",
+			"type": "object", "required": ["id", "type", "occurredAt", "data"],
+			"properties": {
+				"id": {"type": "string", "format": "uuid"},
+				"type": {"const": "test.event"},
+				"occurredAt": {"type": "string", "format": "date-time"},
+				"data": {"$ref": "#/$defs/TestPayload"}
+			}
 		}],
 		"$defs": {
 			"TestPayload": {"type": "object", "required": [` + required + `], "properties": {` + properties + `}},
 			"Other": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "format": "uuid"}}}
 		}
 	}`)
+}
+
+// withPayload is schemaWith's schema with its payload definition replaced.
+func withPayload(definition string) []byte {
+	schema := string(schemaWith(`"id"`, `"id": {"type": "string"}`))
+	return []byte(strings.Replace(schema, `"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}`, definition, 1))
+}
+
+// withEvent is schemaWith's schema with its event's data property replaced,
+// its id property too when one is given, and more keywords on the event.
+func withEvent(data string, id string, keywords ...string) []byte {
+	schema := string(schemaWith(`"id"`, `"id": {"type": "string"}`))
+	schema = strings.Replace(schema, `"data": {"$ref": "#/$defs/TestPayload"}`, data, 1)
+	if id != "" {
+		schema = strings.Replace(schema, `"id": {"type": "string", "format": "uuid"},
+				"type"`, id+`, "type"`, 1)
+	}
+	for _, keyword := range keywords {
+		schema = strings.Replace(schema, `"title": "test.event"`, keyword+`, "title": "test.event"`, 1)
+	}
+	return []byte(schema)
 }
 
 func TestTheGeneratorWritesEveryKindOfField(t *testing.T) {
@@ -107,20 +134,28 @@ func TestTheGeneratorRefusesWhatItCannotType(t *testing.T) {
 	t.Parallel()
 
 	for name, schema := range map[string][]byte{
-		"a number":                     schemaWith(`"score"`, `"score": {"type": "number"}`),
-		"a format it does not know":    schemaWith(`"at"`, `"at": {"type": "string", "format": "date"}`),
-		"an enum":                      schemaWith(`"kind"`, `"kind": {"type": "string", "enum": ["a"]}`),
-		"a list of numbers":            schemaWith(`"counts"`, `"counts": {"type": "array", "items": {"type": "integer"}}`),
-		"a list that may be null":      schemaWith(`"tags"`, `"tags": {"type": ["array", "null"], "items": {"type": "string"}}`),
-		"an object that may be null":   schemaWith(`"other"`, `"other": {"type": ["object", "null"]}`),
-		"a $ref to nothing":            schemaWith(`"other"`, `"other": {"$ref": "#/$defs/Missing"}`),
-		"a $ref beside other keywords": schemaWith(`"other"`, `"other": {"$ref": "#/$defs/Other", "type": "object"}`),
-		"a property that is optional":  schemaWith(`"id"`, `"id": {"type": "string"}, "name": {"type": "string"}`),
-		"a key that is not described":  schemaWith(`"id", "name"`, `"id": {"type": "string"}`),
-		"known values on a number":     schemaWith(`"count"`, `"count": {"type": "integer", "x-known-values": ["1"]}`),
-		"no events":                    []byte(`{"oneOf": [], "$defs": {}}`),
-		"an event whose data is inline": []byte(`{"oneOf": [{"title": "test.event",
-			"properties": {"type": {"const": "test.event"}, "data": {"type": "object"}}}], "$defs": {}}`),
+		"a number":                        schemaWith(`"score"`, `"score": {"type": "number"}`),
+		"a format it does not know":       schemaWith(`"at"`, `"at": {"type": "string", "format": "date"}`),
+		"an enum":                         schemaWith(`"kind"`, `"kind": {"type": "string", "enum": ["a"]}`),
+		"a list of numbers":               schemaWith(`"counts"`, `"counts": {"type": "array", "items": {"type": "integer"}}`),
+		"a list that may be null":         schemaWith(`"tags"`, `"tags": {"type": ["array", "null"], "items": {"type": "string"}}`),
+		"an object that may be null":      schemaWith(`"other"`, `"other": {"type": ["object", "null"]}`),
+		"a $ref to nothing":               schemaWith(`"other"`, `"other": {"$ref": "#/$defs/Missing"}`),
+		"a $ref beside other keywords":    schemaWith(`"other"`, `"other": {"$ref": "#/$defs/Other", "type": "object"}`),
+		"a property that is optional":     schemaWith(`"id"`, `"id": {"type": "string"}, "name": {"type": "string"}`),
+		"a key that is not described":     schemaWith(`"id", "name"`, `"id": {"type": "string"}`),
+		"known values on a number":        schemaWith(`"count"`, `"count": {"type": "integer", "x-known-values": ["1"]}`),
+		"an enum on a list's items":       schemaWith(`"tags"`, `"tags": {"type": "array", "items": {"type": "string", "enum": ["approved"]}}`),
+		"a format on a list's items":      schemaWith(`"ids"`, `"ids": {"type": "array", "items": {"type": "string", "format": "uuid"}}`),
+		"a limit on a list":               schemaWith(`"tags"`, `"tags": {"type": "array", "items": {"type": "string"}, "maxItems": 3}`),
+		"no events":                       []byte(`{"oneOf": [], "$defs": {}}`),
+		"a payload that may be null":      withPayload(`"type": ["object", "null"], "required": [], "properties": {}`),
+		"a payload that is not an object": withPayload(`"type": "string"`),
+		"a payload closed to new fields":  withPayload(`"type": "object", "required": [], "properties": {}, "additionalProperties": false`),
+		"an event whose data is inline":   withEvent(`"data": {"type": "object"}`, ``),
+		"an event with another id":        withEvent(`"data": {"$ref": "#/$defs/TestPayload"}`, `"id": {"type": "string"}`),
+		"an event with a fifth field":     withEvent(`"data": {"$ref": "#/$defs/TestPayload"}, "version": {"type": "integer"}`, ``),
+		"an event that is one of several": withEvent(`"data": {"$ref": "#/$defs/TestPayload"}`, ``, `"anyOf": []`),
 	} {
 		if _, err := readModel(schema); !errors.Is(err, ErrUnsupported) {
 			t.Errorf("%s: %v", name, err)
