@@ -93,7 +93,7 @@ export interface TrainingExemptionPayload {
 export interface AgentHubFindingCreatedPayload {
   findingId: string;
   kind: "action" | "exposure" | (string & {});
-  ruleId: "unapproved_mcp_servers" | "secrets_and_credentials" | "cimento_guard_installed" | (string & {});
+  ruleId: "unapproved_mcp_servers" | "secrets_and_credentials" | "cimento_guard_installed" | "acceptable_use" | "customer_data_destinations" | (string & {});
   ruleName: string;
   title: string;
   response: "nudge" | "block" | (string & {});
@@ -102,17 +102,17 @@ export interface AgentHubFindingCreatedPayload {
 
 export interface AgentHubFindingDecisionPayload {
   findingId: string;
-  decision: "rotated" | "false_positive" | (string & {}) | null;
+  decision: "rotated" | "false_positive" | "judged_a_key" | "not_a_credential" | (string & {}) | null;
   actorId: string | null;
 }
 
 export interface AgentHubFindingClosedPayload {
   findingId: string;
-  ruleId: "unapproved_mcp_servers" | "secrets_and_credentials" | "cimento_guard_installed" | (string & {});
+  ruleId: "unapproved_mcp_servers" | "secrets_and_credentials" | "cimento_guard_installed" | "acceptable_use" | "customer_data_destinations" | (string & {});
 }
 
 export interface AgentHubRuleUpdatedPayload {
-  ruleId: "unapproved_mcp_servers" | "secrets_and_credentials" | "cimento_guard_installed" | (string & {});
+  ruleId: "unapproved_mcp_servers" | "secrets_and_credentials" | "cimento_guard_installed" | "acceptable_use" | "customer_data_destinations" | (string & {});
   response: "off" | "watch" | "nudge" | "block" | "fix" | (string & {});
   actorId: string | null;
 }

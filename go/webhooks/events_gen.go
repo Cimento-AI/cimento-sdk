@@ -196,9 +196,11 @@ const (
 
 // The values AgentHubFindingCreatedPayload.RuleID takes today. Others may be added.
 const (
-	AgentHubFindingCreatedPayloadRuleIDUnapprovedMCPServers  = "unapproved_mcp_servers"
-	AgentHubFindingCreatedPayloadRuleIDSecretsAndCredentials = "secrets_and_credentials"
-	AgentHubFindingCreatedPayloadRuleIDCimentoGuardInstalled = "cimento_guard_installed"
+	AgentHubFindingCreatedPayloadRuleIDUnapprovedMCPServers     = "unapproved_mcp_servers"
+	AgentHubFindingCreatedPayloadRuleIDSecretsAndCredentials    = "secrets_and_credentials"
+	AgentHubFindingCreatedPayloadRuleIDCimentoGuardInstalled    = "cimento_guard_installed"
+	AgentHubFindingCreatedPayloadRuleIDAcceptableUse            = "acceptable_use"
+	AgentHubFindingCreatedPayloadRuleIDCustomerDataDestinations = "customer_data_destinations"
 )
 
 // The values AgentHubFindingCreatedPayload.Response takes today. Others may be added.
@@ -215,8 +217,10 @@ type AgentHubFindingDecisionPayload struct {
 
 // The values AgentHubFindingDecisionPayload.Decision takes today. Others may be added.
 const (
-	AgentHubFindingDecisionPayloadDecisionRotated       = "rotated"
-	AgentHubFindingDecisionPayloadDecisionFalsePositive = "false_positive"
+	AgentHubFindingDecisionPayloadDecisionRotated        = "rotated"
+	AgentHubFindingDecisionPayloadDecisionFalsePositive  = "false_positive"
+	AgentHubFindingDecisionPayloadDecisionJudgedAKey     = "judged_a_key"
+	AgentHubFindingDecisionPayloadDecisionNotACredential = "not_a_credential"
 )
 
 type AgentHubFindingClosedPayload struct {
@@ -226,9 +230,11 @@ type AgentHubFindingClosedPayload struct {
 
 // The values AgentHubFindingClosedPayload.RuleID takes today. Others may be added.
 const (
-	AgentHubFindingClosedPayloadRuleIDUnapprovedMCPServers  = "unapproved_mcp_servers"
-	AgentHubFindingClosedPayloadRuleIDSecretsAndCredentials = "secrets_and_credentials"
-	AgentHubFindingClosedPayloadRuleIDCimentoGuardInstalled = "cimento_guard_installed"
+	AgentHubFindingClosedPayloadRuleIDUnapprovedMCPServers     = "unapproved_mcp_servers"
+	AgentHubFindingClosedPayloadRuleIDSecretsAndCredentials    = "secrets_and_credentials"
+	AgentHubFindingClosedPayloadRuleIDCimentoGuardInstalled    = "cimento_guard_installed"
+	AgentHubFindingClosedPayloadRuleIDAcceptableUse            = "acceptable_use"
+	AgentHubFindingClosedPayloadRuleIDCustomerDataDestinations = "customer_data_destinations"
 )
 
 type AgentHubRuleUpdatedPayload struct {
@@ -239,9 +245,11 @@ type AgentHubRuleUpdatedPayload struct {
 
 // The values AgentHubRuleUpdatedPayload.RuleID takes today. Others may be added.
 const (
-	AgentHubRuleUpdatedPayloadRuleIDUnapprovedMCPServers  = "unapproved_mcp_servers"
-	AgentHubRuleUpdatedPayloadRuleIDSecretsAndCredentials = "secrets_and_credentials"
-	AgentHubRuleUpdatedPayloadRuleIDCimentoGuardInstalled = "cimento_guard_installed"
+	AgentHubRuleUpdatedPayloadRuleIDUnapprovedMCPServers     = "unapproved_mcp_servers"
+	AgentHubRuleUpdatedPayloadRuleIDSecretsAndCredentials    = "secrets_and_credentials"
+	AgentHubRuleUpdatedPayloadRuleIDCimentoGuardInstalled    = "cimento_guard_installed"
+	AgentHubRuleUpdatedPayloadRuleIDAcceptableUse            = "acceptable_use"
+	AgentHubRuleUpdatedPayloadRuleIDCustomerDataDestinations = "customer_data_destinations"
 )
 
 // The values AgentHubRuleUpdatedPayload.Response takes today. Others may be added.

@@ -11,7 +11,9 @@
           "x-known-values": [
             "unapproved_mcp_servers",
             "secrets_and_credentials",
-            "cimento_guard_installed"
+            "cimento_guard_installed",
+            "acceptable_use",
+            "customer_data_destinations"
           ]
         }
       },
@@ -46,7 +48,9 @@
           "x-known-values": [
             "unapproved_mcp_servers",
             "secrets_and_credentials",
-            "cimento_guard_installed"
+            "cimento_guard_installed",
+            "acceptable_use",
+            "customer_data_destinations"
           ]
         },
         "ruleName": {
@@ -86,7 +90,9 @@
           ],
           "x-known-values": [
             "rotated",
-            "false_positive"
+            "false_positive",
+            "judged_a_key",
+            "not_a_credential"
           ]
         },
         "findingId": {
@@ -145,7 +151,9 @@
           "x-known-values": [
             "unapproved_mcp_servers",
             "secrets_and_credentials",
-            "cimento_guard_installed"
+            "cimento_guard_installed",
+            "acceptable_use",
+            "customer_data_destinations"
           ]
         }
       },
