@@ -1,6 +1,6 @@
 {
   "name": "@cimento/webhooks",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Verify webhooks sent by Cimento and read them as typed events.",
   "license": "MIT",
   "repository": {
