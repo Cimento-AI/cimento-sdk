@@ -1,0 +1,9 @@
+{
+  "id": "df8e9dac-b1c0-42d3-b4e5-5a6b7c8d9e0f",
+  "type": "training.campaign.launched",
+  "occurredAt": "2026-11-12T09:00:00.000Z",
+  "data": {
+    "campaignId": "2e1d0c9b-8a7f-4e6d-b5c4-a3b2c1d0e9f8",
+    "name": "Security awareness 2027"
+  }
+}
