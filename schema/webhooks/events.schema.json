@@ -1,0 +1,1584 @@
+{
+  "$defs": {
+    "AgentHubFindingClosedPayload": {
+      "properties": {
+        "findingId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "ruleId": {
+          "type": "string",
+          "x-known-values": [
+            "unapproved_mcp_servers",
+            "secrets_and_credentials",
+            "cimento_guard_installed"
+          ]
+        }
+      },
+      "required": [
+        "findingId",
+        "ruleId"
+      ],
+      "type": "object"
+    },
+    "AgentHubFindingCreatedPayload": {
+      "properties": {
+        "findingId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "x-known-values": [
+            "action",
+            "exposure"
+          ]
+        },
+        "response": {
+          "type": "string",
+          "x-known-values": [
+            "nudge",
+            "block"
+          ]
+        },
+        "ruleId": {
+          "type": "string",
+          "x-known-values": [
+            "unapproved_mcp_servers",
+            "secrets_and_credentials",
+            "cimento_guard_installed"
+          ]
+        },
+        "ruleName": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "findingId",
+        "kind",
+        "ruleId",
+        "ruleName",
+        "title",
+        "response",
+        "user"
+      ],
+      "type": "object"
+    },
+    "AgentHubFindingDecisionPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "x-known-values": [
+            "rotated",
+            "false_positive"
+          ]
+        },
+        "findingId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "findingId",
+        "decision",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "AgentHubMCPServerPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mcpServerId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mcpServerId",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "AgentHubRuleUpdatedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "response": {
+          "type": "string",
+          "x-known-values": [
+            "off",
+            "watch",
+            "nudge",
+            "block",
+            "fix"
+          ]
+        },
+        "ruleId": {
+          "type": "string",
+          "x-known-values": [
+            "unapproved_mcp_servers",
+            "secrets_and_credentials",
+            "cimento_guard_installed"
+          ]
+        }
+      },
+      "required": [
+        "ruleId",
+        "response",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "AgentHubSettingsUpdatedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "changedKeys": {
+          "items": {
+            "type": "string",
+            "x-known-values": [
+              "telemetry.full_content",
+              "telemetry.retention_days",
+              "telemetry.mask",
+              "enforcement.enabled",
+              "enforcement.soft_start",
+              "enforcement.fallback",
+              "alerts.manager_copy_on_third",
+              "alerts.weekly_summary"
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "changedKeys",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "AgentHubSimulationCompletedPayload": {
+      "properties": {
+        "counts": {
+          "$ref": "#/$defs/AgentHubSimulationCounts"
+        },
+        "passId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "passId",
+        "counts"
+      ],
+      "type": "object"
+    },
+    "AgentHubSimulationCounts": {
+      "properties": {
+        "agents": {
+          "type": "integer"
+        },
+        "failed": {
+          "type": "integer"
+        },
+        "landed": {
+          "type": "integer"
+        },
+        "notCopyable": {
+          "type": "integer"
+        },
+        "saved": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agents",
+        "saved",
+        "landed",
+        "notCopyable",
+        "failed"
+      ],
+      "type": "object"
+    },
+    "AgentHubSimulationRequestedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requestId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requestId",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "PhishingExclusionAddedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "user",
+        "actorId",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "PhishingExclusionRemovedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "user",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "PhishingProgramEnabledPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "PhishingProgramStoppedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cancelledSends": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "actorId",
+        "cancelledSends"
+      ],
+      "type": "object"
+    },
+    "PhishingRemediationCompletedPayload": {
+      "properties": {
+        "sendId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "sendId",
+        "user"
+      ],
+      "type": "object"
+    },
+    "PhishingRoundSkippedPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cancelledSends": {
+          "type": "integer"
+        },
+        "period": {
+          "type": "string"
+        },
+        "roundId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "roundId",
+        "period",
+        "cancelledSends",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "PhishingRoundStartedPayload": {
+      "properties": {
+        "period": {
+          "type": "string"
+        },
+        "plannedSends": {
+          "type": "integer"
+        },
+        "roundId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "roundId",
+        "period",
+        "plannedSends"
+      ],
+      "type": "object"
+    },
+    "PhishingSimulationPayload": {
+      "properties": {
+        "roundId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sendId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "sendId",
+        "roundId",
+        "user"
+      ],
+      "type": "object"
+    },
+    "TestPayload": {
+      "properties": {
+        "endpointId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "endpointId"
+      ],
+      "type": "object"
+    },
+    "TrainingAssignmentCompletedPayload": {
+      "properties": {
+        "assignmentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "campaignId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "completedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "completedBy": {
+          "type": "string",
+          "x-known-values": [
+            "learner",
+            "admin"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "assignmentId",
+        "campaignId",
+        "user",
+        "completedAt",
+        "completedBy"
+      ],
+      "type": "object"
+    },
+    "TrainingAssignmentCreatedPayload": {
+      "properties": {
+        "assignmentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "campaignId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "assignmentId",
+        "campaignId",
+        "user",
+        "dueDate"
+      ],
+      "type": "object"
+    },
+    "TrainingAssignmentRemovedPayload": {
+      "properties": {
+        "assignmentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "campaignId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "x-known-values": [
+            "removed",
+            "superseded"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "assignmentId",
+        "campaignId",
+        "user",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "TrainingCampaignPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "campaignId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "courseId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "campaignId",
+        "name",
+        "courseId",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "TrainingExemptionPayload": {
+      "properties": {
+        "actorId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "endsAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "user",
+        "endsAt",
+        "actorId"
+      ],
+      "type": "object"
+    },
+    "TrainingPolicyAcknowledgedPayload": {
+      "properties": {
+        "acknowledgmentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "policyId": {
+          "format": "uuid",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "$ref": "#/$defs/User"
+        }
+      },
+      "required": [
+        "acknowledgmentId",
+        "policyId",
+        "user"
+      ],
+      "type": "object"
+    },
+    "User": {
+      "properties": {
+        "email": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "email"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "description": "The mail provider accepted a simulation for an employee's mailbox. It does not confirm the message reached the inbox.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingSimulationPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.simulation.delivered"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.simulation.delivered",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An employee opened a simulation.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingSimulationPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.simulation.opened"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.simulation.opened",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An employee clicked the link in a simulation.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingSimulationPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.simulation.clicked"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.simulation.clicked",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An employee reported a simulation as phishing.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingSimulationPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.simulation.reported"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.simulation.reported",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "Seven days passed after a simulation with no click and no report.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingSimulationPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.simulation.no_action"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.simulation.no_action",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An employee finished the training assigned after a simulation.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingRemediationCompletedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.remediation.completed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.remediation.completed",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An admin turned phishing simulations on.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingProgramEnabledPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.program.enabled"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.program.enabled",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An admin turned phishing simulations off.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingProgramStoppedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.program.disabled"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.program.disabled",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An admin reset the phishing program to its setup state.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingProgramStoppedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.program.reset"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.program.reset",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An employee was excluded from phishing simulations.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingExclusionAddedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.exclusion.added"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.exclusion.added",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An employee's exclusion from phishing simulations was removed.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingExclusionRemovedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.exclusion.removed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.exclusion.removed",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "A round of simulations was planned and began sending.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingRoundStartedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.round.started"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.round.started",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An admin skipped a round of simulations.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/PhishingRoundSkippedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "phishing.round.skipped"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "phishing.round.skipped",
+      "type": "object",
+      "x-source": "phishing"
+    },
+    {
+      "description": "An admin launched a training campaign.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingCampaignPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.campaign.launched"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.campaign.launched",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An admin cancelled a training campaign.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingCampaignPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.campaign.cancelled"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.campaign.cancelled",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An admin deleted a training campaign, along with its assignments.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingCampaignPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.campaign.deleted"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.campaign.deleted",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An employee was assigned training.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingAssignmentCreatedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.assignment.created"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.assignment.created",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An employee's training assignment was removed or replaced.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingAssignmentRemovedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.assignment.removed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.assignment.removed",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An employee's training assignment was completed, by them or by an admin.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingAssignmentCompletedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.assignment.completed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.assignment.completed",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An employee acknowledged a policy.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingPolicyAcknowledgedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.policy.acknowledged"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.policy.acknowledged",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An employee was exempted from campaigns.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingExemptionPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.exemption.created"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.exemption.created",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An employee's exemption was changed.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingExemptionPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.exemption.updated"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.exemption.updated",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "An admin ended an employee's exemption. An exemption that simply expires sends nothing.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TrainingExemptionPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "training.exemption.ended"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "training.exemption.ended",
+      "type": "object",
+      "x-source": "training"
+    },
+    {
+      "description": "A rule that nudges or blocks matched something an AI agent did.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubFindingCreatedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.finding.created"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.finding.created",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin recorded a decision on a finding.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubFindingDecisionPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.finding.decided"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.finding.decided",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin cleared the decision on a finding.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubFindingDecisionPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.finding.decision_cleared"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.finding.decision_cleared",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "The condition behind an ongoing finding cleared.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubFindingClosedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.finding.closed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.finding.closed",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin changed how a rule responds.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubRuleUpdatedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.rule.updated"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.rule.updated",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin changed Agent Hub settings.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubSettingsUpdatedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.settings.updated"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.settings.updated",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin approved an MCP server.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubMCPServerPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.mcp_server.approved"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.mcp_server.approved",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin revoked an MCP server's approval.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubMCPServerPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.mcp_server.revoked"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.mcp_server.revoked",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An admin requested an attack simulation.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubSimulationRequestedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.simulation.requested"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.simulation.requested",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "An attack simulation run finished.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/AgentHubSimulationCompletedPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "agent_hub.simulation.completed"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "agent_hub.simulation.completed",
+      "type": "object",
+      "x-source": "agent_hub"
+    },
+    {
+      "description": "A test event an admin sent to one endpoint.",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/TestPayload"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "type": {
+          "const": "webhook.test"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "occurredAt",
+        "data"
+      ],
+      "title": "webhook.test",
+      "type": "object",
+      "x-source": "system"
+    }
+  ],
+  "title": "Cimento webhook event"
+}
